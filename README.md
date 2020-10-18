@@ -1,4 +1,4 @@
-# question bank related to topics of your interest
+# question bank related to crypto topics 
 
 
 This is an example of how you can integrate the [jekyll-algolia][1] plugin into the default Jekyll theme.
