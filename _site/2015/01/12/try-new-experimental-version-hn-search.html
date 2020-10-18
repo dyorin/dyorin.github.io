@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">New experimental version of Hacker News Search built with Algolia</h1>
+</header>
+
+<span class="time">12 Jan 2015</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>Exactly a year ago, we began to power the Hacker News search engine (see our
+<a href="http://blog.algolia.com/hacker-news-search-algolia/)">blog post</a>. Since then,
+our HN search project has grown a lot, expanding <strong>from 20M to 25M indexed
+items</strong>, and serving** from 900K to 30M searches a month**.</p>
+
+<p>In addition to <a href="http://hn.algolia.com">hn.algolia.com</a> we’re also providing</p>
+
+<p>build various readers or monitor tools and we love the applications you’re
+building on top of us. The community was also pretty active on
+<a href="https://github.com/algolia/hn-search/issues">GitHub</a>, requesting improvements
+and catching bugs… keep on contributing!</p>
+
+<h2 id="eating-our-own-dog-food-on-hn-search">Eating our own dog food on HN search</h2>
+
+<p>We are <strong>power users of Hacker News</strong> and there isn’t a single day we don’t
+use it. Being able to use our own engine on a tool that is so important to us
+has been a unique opportunity to <strong>eat our </strong><strong>own dog food.</strong> We’ve added a
+lot of API features during the year but unfortunately didn’t have the time to
+refresh the UI so far.</p>
+
+<p>One of our 2015 resolutions was to push the envelope of the HN search UI/UX:</p>
+
+<ul>
+  <li>make it more <strong>readable</strong>,</li>
+  <li>more <strong>usable</strong>,</li>
+  <li>and use <strong>modern</strong> frontend frameworks.</li>
+</ul>
+
+<p>That’s what motivated us to release a <a href="https://new-hn.algolia.com/?experimental">new experimental version of HN
+Search</a>. Try it out and tell us what
+you think!</p>
+
+<h2 id="applying-more-ui-best-practices">Applying more UI best practices</h2>
+
+<p>We’ve learned a lot of things from the
+<a href="https://news.ycombinator.com/item?id=7451206">comments</a> of the users of the
+previous version. We also took a look at all the <a href="http://hn.algolia.com/cool_apps">cool
+apps</a> built on top of our API. We wanted to
+apply more UI best practices and here is what we ended with:</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420906940736_Screen%20Shot%202015-01-10%20at%2017.22.06.png" alt="" /></p>
+
+<h3 id="focus-on-instantaneity">Focus on instantaneity</h3>
+
+<p>The whole layout has been designed to provide an instant experience, reducing
+the wait time before the actual content is displayed. It’s also a way to
+reduce the number of mouse clicks needed to access and navigate through the
+content. The danger with that kind of structure can be to end up with a
+flickering UI where each user action redraw the page, activating unwanted
+behaviors and consuming a huge amount of memory.We focused on a smooth
+experience. Some of the techniques used are based on basic performance
+optimizations but in the end what really matters for us is the user’s
+perception of latency between each interactions, more than objective
+performance. Here are some of the tricks we applied:</p>
+
+<ul>
+  <li><strong>Toggle comments</strong>: we wanted the user to be able to read all the comments of a story on the same page, our API on top of Firebase allowed us to load and display them with a single call.</li>
+  <li><strong>Sticky posts</strong>: in some cases we are loading up to 500 comments, we wanted the user to be able to keep the information of what he is reading and easily collapse it, so we decided to keep the initial post on top of the list.</li>
+  <li><strong>Lazy-loading of non-cached images</strong>: when you are refreshing the UI for each request you don’t want every thumbnail to flick on the UI when loading. So we applied a simple fade to avoid that. But there is actually no way to know if an image is already loaded or not from a previous query. We manage to detect that with a small timeout.</li>
+  <li><strong>Loading feedback</strong>: the most important part of a reactive UI is to always give the user a feedback on the state of the UI. We choose to add this information with a thin loading bar on top of the page.</li>
+  <li><strong>Deferring the load of some unnecessary elements</strong>: this one is about performance. When you are displaying about 20 repeatable items on each keypress you want them as light as possible. In our case we are using Angular.js with some directives which were too slow to render. So we ended up rendering them only if the user interact with them.</li>
+  <li><strong>Cache every requests</strong>: It’s mainly about the backspace key. When a user want to modify his query by removing some characters you don’t want to make him wait for the result: that’s cached by the Algolia JS API client.</li>
+</ul>
+
+<h3 id="focus-on-readability">Focus on readability</h3>
+
+<p>We’ve learned a lot from your comments while releasing our first HN Search
+version last year. Readability of the search results must be outstanding to
+allow you to quickly understand why the results are retrieved and what they
+are about. We ended up with 2 gray colors and 2 font weights to ease the
+readability without being too distracting.</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420909252393_Screen%20Shot%202015-01-10%20at%2018.00.12.png" alt="" /></p>
+
+<h3 id="stay-as-minimal-as-possible">Stay as minimal as possible</h3>
+
+<p>If you see unnecessary stuffs, please tell us. We are not looking for the most
+‘minimal’ UI but for the right balance between usability and minimalism.</p>
+
+<h3 id="sorting--filtering-improvements">Sorting &amp; Filtering improvements</h3>
+
+<p>Most HN Search users are advanced users. They know exactly what they are
+searching for and want to have the ability to sort and filter their results
+precisely. We are now exposing a simple way to either sort results by date or
+popularity in addition to the period filtering capabilities we already had.</p>
+
+<h3 id="inlined-comments">Inlined comments</h3>
+
+<p>We thought it could make a lot of sense to be able to read the comments of a
+story directly from the search result page. Keeping in mind it should be super
+readable, we went for indentations &amp; author colored avatars making it really
+clear to understand who is replying.</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420907561110_Screen%20Shot%202015-01-10%20at%2017.32.21.png" alt="" /></p>
+
+<h3 id="search-settings">Search settings</h3>
+
+<p>Because HN Search users are advanced users, they want to be able to customize
+the way the default ranking is working. So be it, we’ve just exposed a subset
+of the underlying settings we’re using for the search to let you customize it.</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420907721098_Screen%20Shot%202015-01-10%20at%2017.35.07.png" alt="" /></p>
+
+<h3 id="front-page">Front page</h3>
+
+<p>Since Firebase is providing the official API of Hacker News, fetching the
+items currently displayed on the front page is really easy. We decided to pair
+it with our search, allowing users to search for hot stories &amp; comments
+through a discreet menu item.</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420907937295_Screen%20Shot%202015-01-10%20at%2017.38.44.png" alt="" /></p>
+
+<h3 id="starred">Starred</h3>
+
+<p>Let’s go further; what about being able to star some stories to be able to
+search in them later? You’re now able to star any stories directly from the
+results page. The stars are stored locally in your browser for now. Let us
+know if you find the feature valuable!</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420908337814_Screen%20Shot%202015-01-10%20at%2017.45.01.png" alt="" /></p>
+
+<h2 id="contribution">Contribution</h2>
+
+<p>As you may know, the whole source code of the HN Search website is open-source
+and hosted on GitHub. This new version is still based on a Rails 4 project and
+uses Angular.js as the frontend framework. We’ve improved the README to help
+you being able to contribute in minutes. Not to mention: we love pull-
+requests.</p>
+
+<p><strong>Now is starting again the most important part of this project, user testing</strong>. We count on you to bring us the necessary information to make this search your favorite one.</p>
+
+<h2 id="wanna-test">Wanna test?</h2>
+
+<p>To try it, go <a href="https://new-hn.algolia.com">to our experimental version of HN Search</a>, go to “Settings”, and enable the new style:</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420907058703_Screen%20Shot%202015-01-10%20at%2017.23.21.png" alt="" /></p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420907103965_Screen%20Shot%202015-01-10%20at%2017.24.51.png" alt="" /></p>
+
+<h3 id="want-to-contribute">Want to contribute?</h3>
+
+<p>It’s open-source and we’ll be happy to get your feedback! Just use <a href="https://github.com/algolia/hn-search/issues">GitHub’s
+issues</a> to report any idea you
+have in mind. We also love pull-requests :)</p>
+
+<p>Source code: <a href="https://github.com/algolia
+/hn-search">https://github.com/algolia/hn-search</a></p>
+
+<h2 id="try-it-now"><a href="https://new-hn.algolia.com/?experimental">Try it now!</a></h2>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2015/01/12/try-new-experimental-version-hn-search.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/12/23/christmas-gifthub-awesome-autocomplete.html">&laquo; Github Awesome Autocomplete browser extension for Chrome and Firefox</a>
+  
+  
+    <a class="next" href="/2015/02/18/distributed-search-network-latency-ruins-search-experience.html">Don't let network latency ruin the search experience of your international users &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>Exactly a year ago, we began to power the Hacker News search engine (see our
+<a href="http://blog.algolia.com/hacker-news-search-algolia/)">blog post</a>. Since then,
+our HN search project has grown a lot, expanding <strong>from 20M to 25M indexed
+items</strong>, and serving** from 900K to 30M searches a month**.</p>
+
+<p>In addition to <a href="http://hn.algolia.com">hn.algolia.com</a> we’re also providing</p>
+
+<p>build various readers or monitor tools and we love the applications you’re
+building on top of us. The community was also pretty active on
+<a href="https://github.com/algolia/hn-search/issues">GitHub</a>, requesting improvements
+and catching bugs… keep on contributing!</p>
+
+<h2 id="eating-our-own-dog-food-on-hn-search">Eating our own dog food on HN search</h2>
+
+<p>We are <strong>power users of Hacker News</strong> and there isn’t a single day we don’t
+use it. Being able to use our own engine on a tool that is so important to us
+has been a unique opportunity to <strong>eat our </strong><strong>own dog food.</strong> We’ve added a
+lot of API features during the year but unfortunately didn’t have the time to
+refresh the UI so far.</p>
+
+<p>One of our 2015 resolutions was to push the envelope of the HN search UI/UX:</p>
+
+<ul>
+  <li>make it more <strong>readable</strong>,</li>
+  <li>more <strong>usable</strong>,</li>
+  <li>and use <strong>modern</strong> frontend frameworks.</li>
+</ul>
+
+<p>That’s what motivated us to release a <a href="https://new-hn.algolia.com/?experimental">new experimental version of HN
+Search</a>. Try it out and tell us what
+you think!</p>
+
+<h2 id="applying-more-ui-best-practices">Applying more UI best practices</h2>
+
+<p>We’ve learned a lot of things from the
+<a href="https://news.ycombinator.com/item?id=7451206">comments</a> of the users of the
+previous version. We also took a look at all the <a href="http://hn.algolia.com/cool_apps">cool
+apps</a> built on top of our API. We wanted to
+apply more UI best practices and here is what we ended with:</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420906940736_Screen%20Shot%202015-01-10%20at%2017.22.06.png" alt="" /></p>
+
+<h3 id="focus-on-instantaneity">Focus on instantaneity</h3>
+
+<p>The whole layout has been designed to provide an instant experience, reducing
+the wait time before the actual content is displayed. It’s also a way to
+reduce the number of mouse clicks needed to access and navigate through the
+content. The danger with that kind of structure can be to end up with a
+flickering UI where each user action redraw the page, activating unwanted
+behaviors and consuming a huge amount of memory.We focused on a smooth
+experience. Some of the techniques used are based on basic performance
+optimizations but in the end what really matters for us is the user’s
+perception of latency between each interactions, more than objective
+performance. Here are some of the tricks we applied:</p>
+
+<ul>
+  <li><strong>Toggle comments</strong>: we wanted the user to be able to read all the comments of a story on the same page, our API on top of Firebase allowed us to load and display them with a single call.</li>
+  <li><strong>Sticky posts</strong>: in some cases we are loading up to 500 comments, we wanted the user to be able to keep the information of what he is reading and easily collapse it, so we decided to keep the initial post on top of the list.</li>
+  <li><strong>Lazy-loading of non-cached images</strong>: when you are refreshing the UI for each request you don’t want every thumbnail to flick on the UI when loading. So we applied a simple fade to avoid that. But there is actually no way to know if an image is already loaded or not from a previous query. We manage to detect that with a small timeout.</li>
+  <li><strong>Loading feedback</strong>: the most important part of a reactive UI is to always give the user a feedback on the state of the UI. We choose to add this information with a thin loading bar on top of the page.</li>
+  <li><strong>Deferring the load of some unnecessary elements</strong>: this one is about performance. When you are displaying about 20 repeatable items on each keypress you want them as light as possible. In our case we are using Angular.js with some directives which were too slow to render. So we ended up rendering them only if the user interact with them.</li>
+  <li><strong>Cache every requests</strong>: It’s mainly about the backspace key. When a user want to modify his query by removing some characters you don’t want to make him wait for the result: that’s cached by the Algolia JS API client.</li>
+</ul>
+
+<h3 id="focus-on-readability">Focus on readability</h3>
+
+<p>We’ve learned a lot from your comments while releasing our first HN Search
+version last year. Readability of the search results must be outstanding to
+allow you to quickly understand why the results are retrieved and what they
+are about. We ended up with 2 gray colors and 2 font weights to ease the
+readability without being too distracting.</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420909252393_Screen%20Shot%202015-01-10%20at%2018.00.12.png" alt="" /></p>
+
+<h3 id="stay-as-minimal-as-possible">Stay as minimal as possible</h3>
+
+<p>If you see unnecessary stuffs, please tell us. We are not looking for the most
+‘minimal’ UI but for the right balance between usability and minimalism.</p>
+
+<h3 id="sorting--filtering-improvements">Sorting &amp; Filtering improvements</h3>
+
+<p>Most HN Search users are advanced users. They know exactly what they are
+searching for and want to have the ability to sort and filter their results
+precisely. We are now exposing a simple way to either sort results by date or
+popularity in addition to the period filtering capabilities we already had.</p>
+
+<h3 id="inlined-comments">Inlined comments</h3>
+
+<p>We thought it could make a lot of sense to be able to read the comments of a
+story directly from the search result page. Keeping in mind it should be super
+readable, we went for indentations &amp; author colored avatars making it really
+clear to understand who is replying.</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420907561110_Screen%20Shot%202015-01-10%20at%2017.32.21.png" alt="" /></p>
+
+<h3 id="search-settings">Search settings</h3>
+
+<p>Because HN Search users are advanced users, they want to be able to customize
+the way the default ranking is working. So be it, we’ve just exposed a subset
+of the underlying settings we’re using for the search to let you customize it.</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420907721098_Screen%20Shot%202015-01-10%20at%2017.35.07.png" alt="" /></p>
+
+<h3 id="front-page">Front page</h3>
+
+<p>Since Firebase is providing the official API of Hacker News, fetching the
+items currently displayed on the front page is really easy. We decided to pair
+it with our search, allowing users to search for hot stories &amp; comments
+through a discreet menu item.</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420907937295_Screen%20Shot%202015-01-10%20at%2017.38.44.png" alt="" /></p>
+
+<h3 id="starred">Starred</h3>
+
+<p>Let’s go further; what about being able to star some stories to be able to
+search in them later? You’re now able to star any stories directly from the
+results page. The stars are stored locally in your browser for now. Let us
+know if you find the feature valuable!</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420908337814_Screen%20Shot%202015-01-10%20at%2017.45.01.png" alt="" /></p>
+
+<h2 id="contribution">Contribution</h2>
+
+<p>As you may know, the whole source code of the HN Search website is open-source
+and hosted on GitHub. This new version is still based on a Rails 4 project and
+uses Angular.js as the frontend framework. We’ve improved the README to help
+you being able to contribute in minutes. Not to mention: we love pull-
+requests.</p>
+
+<p><strong>Now is starting again the most important part of this project, user testing</strong>. We count on you to bring us the necessary information to make this search your favorite one.</p>
+
+<h2 id="wanna-test">Wanna test?</h2>
+
+<p>To try it, go <a href="https://new-hn.algolia.com">to our experimental version of HN Search</a>, go to “Settings”, and enable the new style:</p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420907058703_Screen%20Shot%202015-01-10%20at%2017.23.21.png" alt="" /></p>
+
+<p><img src="./assets/hackpad.com_JoORx6jqcVU_p.233467_1420907103965_Screen%20Shot%202015-01-10%20at%2017.24.51.png" alt="" /></p>
+
+<h3 id="want-to-contribute">Want to contribute?</h3>
+
+<p>It’s open-source and we’ll be happy to get your feedback! Just use <a href="https://github.com/algolia/hn-search/issues">GitHub’s
+issues</a> to report any idea you
+have in mind. We also love pull-requests :)</p>
+
+<p>Source code: <a href="https://github.com/algolia
+/hn-search">https://github.com/algolia/hn-search</a></p>
+
+<h2 id="try-it-now"><a href="https://new-hn.algolia.com/?experimental">Try it now!</a></h2>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

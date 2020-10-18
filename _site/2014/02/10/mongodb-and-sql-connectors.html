@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Introducing Easier Onboarding and Activation with Connectors</h1>
+</header>
+
+<span class="time">10 Feb 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>Most of our users are <strong>technical</strong>. They love writing code, and we love
+providing API clients in the major programming languages to them (we are
+currently <a href="http://www.algolia.com/doc">supporting 10 platforms</a>).</p>
+
+<p>They are doers. They love prototyping. Just like us, they work for startups
+which need to move fast, and get things done, keeping in mind that done is
+better than perfect. It is very important that they <strong>don’t want to waste
+time</strong>. In this post, I will explain how one would have used our API up to
+now, and how we introduced SQL and MongoDB connectors for easier onboarding,
+integration and testing.</p>
+
+<h2 id="beforethe-first-steps-with-our-api">Before: The first steps with our API</h2>
+
+<p>Up until now, our onboarding process asked you to try the API by uploading
+your data. We emphasized our <a href="http://www.algolia.com/doc">documentation</a>, and
+we made sure our users would not need more than a few minutes to integrate our
+<a href="http://www.algolia.com/doc/rest">REST API</a>. Nevertheless, exporting your
+application’s data to a JSON or CSV file is often more complex than it
+appears, especially when you have millions of rows - and especially because
+developers are lazy :) No worries, that’s <a href="http://www.codinghorror.com/blog/2005/08/how-to-be-lazy-dumb-and-successful.html">totally
+OK</a>. It is something you may not be willing to do, especially
+just to try a service, so we decided to try something else.</p>
+
+<h3 id="initial-import">Initial import</h3>
+
+<p>90% of our users are using a SQL or MongoDB database. Exporting a table or a
+collection to a JSON file can be easy if you’re using a framework, for example
+Ruby on Rails:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s2">"/tmp/export.json"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">f</span><span class="o">|</span>
+  <span class="n">f</span> <span class="o">&lt;&lt;</span> <span class="no">MyActiveRecordModel</span><span class="p">.</span><span class="nf">all</span><span class="p">.</span><span class="nf">to_json</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>…or more annoying, for example when using PHP without any framework:</p>
+
+<div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mysql_connect</span><span class="p">(</span><span class="s1">'localhost'</span><span class="p">,</span> <span class="s1">'mysql_user'</span><span class="p">,</span> <span class="s1">'mysql_password'</span><span class="p">);</span>
+<span class="nb">mysql_set_charset</span><span class="p">(</span><span class="s1">'utf8'</span><span class="p">);</span>
+<span class="nv">$results</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="nv">$q</span> <span class="o">=</span> <span class="nb">mysql_query</span><span class="p">(</span><span class="s2">"SELECT * FROM YourTable"</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="nv">$q</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">while</span> <span class="p">((</span><span class="nv">$row</span> <span class="o">=</span> <span class="nb">mysql_fetch_assoc</span><span class="p">(</span><span class="nv">$q</span><span class="p">)))</span> <span class="p">{</span>
+    <span class="nb">array_push</span><span class="p">(</span><span class="nv">$results</span><span class="p">,</span> <span class="nv">$row</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="nv">$fp</span> <span class="o">=</span> <span class="nb">fopen</span><span class="p">(</span><span class="s1">'/tmp/export.json'</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">);</span>
+<span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fp</span><span class="p">,</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$results</span><span class="p">));</span>
+<span class="nb">fclose</span><span class="p">(</span><span class="nv">$fp</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Anyway, in both cases it gets harder if you want to export millions of rows
+without consuming hundreds GB of RAM. So you will need to use our API clients:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">index</span> <span class="o">=</span> <span class="no">Algolia</span><span class="o">::</span><span class="no">Index</span><span class="p">.</span><span class="nf">new</span> <span class="s2">"YourIndex"</span>
+<span class="no">MyActiveRecordModel</span><span class="p">.</span><span class="nf">find_in_batches</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">objects</span><span class="o">|</span>
+  <span class="n">index</span><span class="p">.</span><span class="nf">add_objects</span><span class="p">(</span><span class="n">objects</span><span class="p">)</span>
+<span class="k">end</span>
+<span class="c1"># that's actually what `MyActiveRecordModel.reindex!` does</span>
+
+<span class="n">mysql_connect</span><span class="p">(</span><span class="s1">'localhost'</span><span class="p">,</span> <span class="s1">'mysql_user'</span><span class="p">,</span> <span class="s1">'mysql_password'</span><span class="p">);</span>
+<span class="n">mysql_set_charset</span><span class="p">(</span><span class="s1">'utf8'</span><span class="p">);</span>
+<span class="vg">$limit</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">;</span>
+<span class="vg">$start</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="vg">$index</span> <span class="o">=</span> <span class="vg">$client</span><span class="o">-&gt;</span><span class="n">initIndex</span><span class="p">(</span><span class="s1">'YourIndexName'</span><span class="p">);</span>
+<span class="k">while</span> <span class="p">(</span><span class="kp">true</span><span class="p">)</span> <span class="p">{</span>
+  <span class="vg">$q</span> <span class="o">=</span> <span class="n">mysql_query</span><span class="p">(</span><span class="s2">"SELECT * FROM YourTable LIMIT "</span> <span class="o">.</span> <span class="vg">$start</span> <span class="o">.</span> <span class="s2">","</span> <span class="o">.</span> <span class="vg">$limit</span><span class="p">);</span>
+  <span class="vg">$n</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="vg">$q</span><span class="p">)</span> <span class="p">{</span>
+    <span class="vg">$objects</span> <span class="o">=</span> <span class="n">array</span><span class="p">();</span>
+    <span class="k">while</span><span class="p">((</span><span class="vg">$row</span> <span class="o">=</span> <span class="n">mysql_fetch_assoc</span><span class="p">(</span><span class="vg">$q</span><span class="p">)))</span> <span class="p">{</span>
+      <span class="n">array_push</span><span class="p">(</span><span class="vg">$objects</span><span class="p">,</span> <span class="vg">$row</span><span class="p">);</span>
+      <span class="o">++</span><span class="vg">$n</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="vg">$index</span><span class="o">-&gt;</span><span class="n">addObjects</span><span class="p">(</span><span class="vg">$objects</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="vg">$n</span> <span class="o">!=</span> <span class="vg">$limit</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">break</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="vg">$start</span> <span class="o">+=</span> <span class="vg">$n</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="incremental-updates">Incremental updates</h3>
+
+<p>Once imported, you will need to go further and keep your DB and our indexes
+up-to-date. You can either:</p>
+
+<ul>
+  <li>Clear your index and re-import all your records hourly/daily with the previous methods:
+    <ul>
+      <li>non-intrusive,</li>
+      <li>not real-time,</li>
+      <li>not durable,</li>
+      <li>need to import your data to a temporary index + replace the original one atomically once imported if you want to keep your service running while re-importing</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Or</p>
+
+<ul>
+  <li>Patch your application/website code to replicate every add/delete/update operations to our API:
+    <ul>
+      <li>real-time,</li>
+      <li>consistent &amp; durable,</li>
+      <li>a little intrusive to some people, even though it is only a few lines of code (<a href="http://www.algolia.com/doc">see our documentation</a>)</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="after-introducing-connectors">After: Introducing connectors</h2>
+
+<p>Even if we did recommend you to modify your application code to replicate all
+add/delete/update operations from your DB to our API, this should not be the
+only option, especially to test Algolia. Users want to be convinced before
+modifying anything in their production-ready application/website. This is why
+we are really proud to release 2 open-source connectors: a non-intrusive and
+efficient way to synchronize your current SQL or MongoDB database with our
+servers.</p>
+
+<h3 id="sql-connector">SQL connector</h3>
+
+<p>Github project: <a href="https://github.com/algolia/jdbc-java-connector">algolia/jdbc-java-connector</a> (MIT license, we love pull-requests :))</p>
+
+<p>The connector starts by enumerating the table and push all matching rows to
+our server. If you store the last modification date of a row in a field, you
+can use it in order to send all detected updates every 10 seconds. Every 5
+minutes, the connector synchronizes your database with the index by adding the
+new rows and removing the deleted ones.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">jdbc</span><span class="o">-</span><span class="n">connector</span><span class="o">.</span><span class="na">sh</span> <span class="o">--</span><span class="n">source</span> <span class="s">"jdbc:mysql://localhost/YourDB"</span>  
+  <span class="o">--</span><span class="n">username</span> <span class="n">mysqlUser</span> <span class="o">--</span><span class="n">password</span> <span class="n">mysqlPassword</span>             
+  <span class="o">--</span><span class="n">selectQuery</span> <span class="s">"SELECT * FROM YourTable"</span> <span class="o">--</span><span class="n">primaryField</span> <span class="n">id</span> 
+  <span class="o">--</span><span class="n">updateQuery</span> <span class="s">"SELECT * FROM YourTable WHERE updated_at &gt; _$"</span>
+  <span class="o">--</span><span class="n">updatedAtField</span> <span class="n">updated_at</span> 
+  <span class="o">--</span><span class="n">applicationId</span> <span class="n">YourApplicationId</span> <span class="o">--</span><span class="n">apiKey</span> <span class="n">YourApiKey</span> <span class="o">--</span><span class="n">index</span> <span class="n">YourIndexName</span>
+</code></pre></div></div>
+
+<p>If you don’t have an updated_at  field, you can use:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">jdbc</span><span class="o">-</span><span class="n">connector</span><span class="o">.</span><span class="na">sh</span> <span class="o">--</span><span class="n">source</span> <span class="s">"jdbc:mysql://localhost/YourDB"</span>  
+  <span class="o">--</span><span class="n">username</span> <span class="n">mysqlUser</span> <span class="o">--</span><span class="n">password</span> <span class="n">mysqlPassword</span>             
+  <span class="o">--</span><span class="n">selectQuery</span> <span class="s">"SELECT * FROM YourTable"</span> <span class="o">--</span><span class="n">primaryField</span> <span class="n">id</span> 
+  <span class="o">--</span><span class="n">applicationId</span> <span class="n">YourApplicationId</span> <span class="o">--</span><span class="n">apiKey</span> <span class="n">YourApiKey</span> <span class="o">--</span><span class="n">index</span> <span class="n">YourIndexName</span>
+</code></pre></div></div>
+
+<p>The full list of features is available on <a href="https://github.com/algolia/jdbc-java-connector">Github</a> (remember, we ♥ feature and pull-requests)!</p>
+
+<h3 id="mongodb-connector">MongoDB connector</h3>
+
+<p>Github
+project: <a href="https://github.com/algolia/mongo-connector">algolia/mongo-connector</a></p>
+
+<p>This connector has been forked from <a href="https://github.com/10gen-labs/mongo-connector">10gen-lab’s official
+connector</a> and is based on
+MongoDB’s <a href="http://docs.mongodb.org/manual/core/replica-set-oplog/">operation logs</a>. This means you will need to start your mongod  server specifying a
+<a href="http://docs.mongodb.org/manual/tutorial/deploy-replica-set/">replica set</a>.
+Basically, you need to start your server with: mongod –replSet
+REPLICA_SET_IDENTIFIER. Once started, the connector will replicate each
+addition/deletion/update to our server, sending a batch of operations every 10
+seconds.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mongo-connector -m localhost:27017 -n myDb.myCollection 
+  -d ./doc_managers/algolia_doc_manager.py              
+  -t YourApplicationID:YourApiKey:YourIndex
+</code></pre></div></div>
+
+<p>The full features list is available on <a href="https://github.com/algolia/mongo-connector">Github</a> (we ♥ feature and pull-requests).</p>
+
+<h2 id="conclusion-easier-onboarding-larger-audience">Conclusion: Easier Onboarding, Larger Audience!</h2>
+
+<p>Helping our users to onboard and try Algolia without writing a single line of
+code is not only a way to attract more non-technical users; It is also a way
+to save the time of our technical but overbooked users, allowing them to be
+convinced without wasting their time before really implementing it.</p>
+
+<p>Those connectors are open-source and we will continue to improve them based on
+your feedback. Your feature requests are welcome!</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/02/10/mongodb-and-sql-connectors.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/01/29/postmortem-todays-8min-indexing-downtime.html">&laquo; Postmortem of today's 8min indexing downtime</a>
+  
+  
+    <a class="next" href="/2014/03/14/added-asian-datacenter-offer.html">Algolia Now Provides Realtime Search in Asia! &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>Most of our users are <strong>technical</strong>. They love writing code, and we love
+providing API clients in the major programming languages to them (we are
+currently <a href="http://www.algolia.com/doc">supporting 10 platforms</a>).</p>
+
+<p>They are doers. They love prototyping. Just like us, they work for startups
+which need to move fast, and get things done, keeping in mind that done is
+better than perfect. It is very important that they <strong>don’t want to waste
+time</strong>. In this post, I will explain how one would have used our API up to
+now, and how we introduced SQL and MongoDB connectors for easier onboarding,
+integration and testing.</p>
+
+<h2 id="beforethe-first-steps-with-our-api">Before: The first steps with our API</h2>
+
+<p>Up until now, our onboarding process asked you to try the API by uploading
+your data. We emphasized our <a href="http://www.algolia.com/doc">documentation</a>, and
+we made sure our users would not need more than a few minutes to integrate our
+<a href="http://www.algolia.com/doc/rest">REST API</a>. Nevertheless, exporting your
+application’s data to a JSON or CSV file is often more complex than it
+appears, especially when you have millions of rows - and especially because
+developers are lazy :) No worries, that’s <a href="http://www.codinghorror.com/blog/2005/08/how-to-be-lazy-dumb-and-successful.html">totally
+OK</a>. It is something you may not be willing to do, especially
+just to try a service, so we decided to try something else.</p>
+
+<h3 id="initial-import">Initial import</h3>
+
+<p>90% of our users are using a SQL or MongoDB database. Exporting a table or a
+collection to a JSON file can be easy if you’re using a framework, for example
+Ruby on Rails:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s2">"/tmp/export.json"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">f</span><span class="o">|</span>
+  <span class="n">f</span> <span class="o">&lt;&lt;</span> <span class="no">MyActiveRecordModel</span><span class="p">.</span><span class="nf">all</span><span class="p">.</span><span class="nf">to_json</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>…or more annoying, for example when using PHP without any framework:</p>
+
+<div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mysql_connect</span><span class="p">(</span><span class="s1">'localhost'</span><span class="p">,</span> <span class="s1">'mysql_user'</span><span class="p">,</span> <span class="s1">'mysql_password'</span><span class="p">);</span>
+<span class="nb">mysql_set_charset</span><span class="p">(</span><span class="s1">'utf8'</span><span class="p">);</span>
+<span class="nv">$results</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+<span class="nv">$q</span> <span class="o">=</span> <span class="nb">mysql_query</span><span class="p">(</span><span class="s2">"SELECT * FROM YourTable"</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="nv">$q</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">while</span> <span class="p">((</span><span class="nv">$row</span> <span class="o">=</span> <span class="nb">mysql_fetch_assoc</span><span class="p">(</span><span class="nv">$q</span><span class="p">)))</span> <span class="p">{</span>
+    <span class="nb">array_push</span><span class="p">(</span><span class="nv">$results</span><span class="p">,</span> <span class="nv">$row</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="nv">$fp</span> <span class="o">=</span> <span class="nb">fopen</span><span class="p">(</span><span class="s1">'/tmp/export.json'</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">);</span>
+<span class="nb">fwrite</span><span class="p">(</span><span class="nv">$fp</span><span class="p">,</span> <span class="nb">json_encode</span><span class="p">(</span><span class="nv">$results</span><span class="p">));</span>
+<span class="nb">fclose</span><span class="p">(</span><span class="nv">$fp</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Anyway, in both cases it gets harder if you want to export millions of rows
+without consuming hundreds GB of RAM. So you will need to use our API clients:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">index</span> <span class="o">=</span> <span class="no">Algolia</span><span class="o">::</span><span class="no">Index</span><span class="p">.</span><span class="nf">new</span> <span class="s2">"YourIndex"</span>
+<span class="no">MyActiveRecordModel</span><span class="p">.</span><span class="nf">find_in_batches</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">objects</span><span class="o">|</span>
+  <span class="n">index</span><span class="p">.</span><span class="nf">add_objects</span><span class="p">(</span><span class="n">objects</span><span class="p">)</span>
+<span class="k">end</span>
+<span class="c1"># that's actually what `MyActiveRecordModel.reindex!` does</span>
+
+<span class="n">mysql_connect</span><span class="p">(</span><span class="s1">'localhost'</span><span class="p">,</span> <span class="s1">'mysql_user'</span><span class="p">,</span> <span class="s1">'mysql_password'</span><span class="p">);</span>
+<span class="n">mysql_set_charset</span><span class="p">(</span><span class="s1">'utf8'</span><span class="p">);</span>
+<span class="vg">$limit</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">;</span>
+<span class="vg">$start</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="vg">$index</span> <span class="o">=</span> <span class="vg">$client</span><span class="o">-&gt;</span><span class="n">initIndex</span><span class="p">(</span><span class="s1">'YourIndexName'</span><span class="p">);</span>
+<span class="k">while</span> <span class="p">(</span><span class="kp">true</span><span class="p">)</span> <span class="p">{</span>
+  <span class="vg">$q</span> <span class="o">=</span> <span class="n">mysql_query</span><span class="p">(</span><span class="s2">"SELECT * FROM YourTable LIMIT "</span> <span class="o">.</span> <span class="vg">$start</span> <span class="o">.</span> <span class="s2">","</span> <span class="o">.</span> <span class="vg">$limit</span><span class="p">);</span>
+  <span class="vg">$n</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="vg">$q</span><span class="p">)</span> <span class="p">{</span>
+    <span class="vg">$objects</span> <span class="o">=</span> <span class="n">array</span><span class="p">();</span>
+    <span class="k">while</span><span class="p">((</span><span class="vg">$row</span> <span class="o">=</span> <span class="n">mysql_fetch_assoc</span><span class="p">(</span><span class="vg">$q</span><span class="p">)))</span> <span class="p">{</span>
+      <span class="n">array_push</span><span class="p">(</span><span class="vg">$objects</span><span class="p">,</span> <span class="vg">$row</span><span class="p">);</span>
+      <span class="o">++</span><span class="vg">$n</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="vg">$index</span><span class="o">-&gt;</span><span class="n">addObjects</span><span class="p">(</span><span class="vg">$objects</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="vg">$n</span> <span class="o">!=</span> <span class="vg">$limit</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">break</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="vg">$start</span> <span class="o">+=</span> <span class="vg">$n</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="incremental-updates">Incremental updates</h3>
+
+<p>Once imported, you will need to go further and keep your DB and our indexes
+up-to-date. You can either:</p>
+
+<ul>
+  <li>Clear your index and re-import all your records hourly/daily with the previous methods:
+    <ul>
+      <li>non-intrusive,</li>
+      <li>not real-time,</li>
+      <li>not durable,</li>
+      <li>need to import your data to a temporary index + replace the original one atomically once imported if you want to keep your service running while re-importing</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Or</p>
+
+<ul>
+  <li>Patch your application/website code to replicate every add/delete/update operations to our API:
+    <ul>
+      <li>real-time,</li>
+      <li>consistent &amp; durable,</li>
+      <li>a little intrusive to some people, even though it is only a few lines of code (<a href="http://www.algolia.com/doc">see our documentation</a>)</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="after-introducing-connectors">After: Introducing connectors</h2>
+
+<p>Even if we did recommend you to modify your application code to replicate all
+add/delete/update operations from your DB to our API, this should not be the
+only option, especially to test Algolia. Users want to be convinced before
+modifying anything in their production-ready application/website. This is why
+we are really proud to release 2 open-source connectors: a non-intrusive and
+efficient way to synchronize your current SQL or MongoDB database with our
+servers.</p>
+
+<h3 id="sql-connector">SQL connector</h3>
+
+<p>Github project: <a href="https://github.com/algolia/jdbc-java-connector">algolia/jdbc-java-connector</a> (MIT license, we love pull-requests :))</p>
+
+<p>The connector starts by enumerating the table and push all matching rows to
+our server. If you store the last modification date of a row in a field, you
+can use it in order to send all detected updates every 10 seconds. Every 5
+minutes, the connector synchronizes your database with the index by adding the
+new rows and removing the deleted ones.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">jdbc</span><span class="o">-</span><span class="n">connector</span><span class="o">.</span><span class="na">sh</span> <span class="o">--</span><span class="n">source</span> <span class="s">"jdbc:mysql://localhost/YourDB"</span>  
+  <span class="o">--</span><span class="n">username</span> <span class="n">mysqlUser</span> <span class="o">--</span><span class="n">password</span> <span class="n">mysqlPassword</span>             
+  <span class="o">--</span><span class="n">selectQuery</span> <span class="s">"SELECT * FROM YourTable"</span> <span class="o">--</span><span class="n">primaryField</span> <span class="n">id</span> 
+  <span class="o">--</span><span class="n">updateQuery</span> <span class="s">"SELECT * FROM YourTable WHERE updated_at &gt; _$"</span>
+  <span class="o">--</span><span class="n">updatedAtField</span> <span class="n">updated_at</span> 
+  <span class="o">--</span><span class="n">applicationId</span> <span class="n">YourApplicationId</span> <span class="o">--</span><span class="n">apiKey</span> <span class="n">YourApiKey</span> <span class="o">--</span><span class="n">index</span> <span class="n">YourIndexName</span>
+</code></pre></div></div>
+
+<p>If you don’t have an updated_at  field, you can use:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">jdbc</span><span class="o">-</span><span class="n">connector</span><span class="o">.</span><span class="na">sh</span> <span class="o">--</span><span class="n">source</span> <span class="s">"jdbc:mysql://localhost/YourDB"</span>  
+  <span class="o">--</span><span class="n">username</span> <span class="n">mysqlUser</span> <span class="o">--</span><span class="n">password</span> <span class="n">mysqlPassword</span>             
+  <span class="o">--</span><span class="n">selectQuery</span> <span class="s">"SELECT * FROM YourTable"</span> <span class="o">--</span><span class="n">primaryField</span> <span class="n">id</span> 
+  <span class="o">--</span><span class="n">applicationId</span> <span class="n">YourApplicationId</span> <span class="o">--</span><span class="n">apiKey</span> <span class="n">YourApiKey</span> <span class="o">--</span><span class="n">index</span> <span class="n">YourIndexName</span>
+</code></pre></div></div>
+
+<p>The full list of features is available on <a href="https://github.com/algolia/jdbc-java-connector">Github</a> (remember, we ♥ feature and pull-requests)!</p>
+
+<h3 id="mongodb-connector">MongoDB connector</h3>
+
+<p>Github
+project: <a href="https://github.com/algolia/mongo-connector">algolia/mongo-connector</a></p>
+
+<p>This connector has been forked from <a href="https://github.com/10gen-labs/mongo-connector">10gen-lab’s official
+connector</a> and is based on
+MongoDB’s <a href="http://docs.mongodb.org/manual/core/replica-set-oplog/">operation logs</a>. This means you will need to start your mongod  server specifying a
+<a href="http://docs.mongodb.org/manual/tutorial/deploy-replica-set/">replica set</a>.
+Basically, you need to start your server with: mongod –replSet
+REPLICA_SET_IDENTIFIER. Once started, the connector will replicate each
+addition/deletion/update to our server, sending a batch of operations every 10
+seconds.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mongo-connector -m localhost:27017 -n myDb.myCollection 
+  -d ./doc_managers/algolia_doc_manager.py              
+  -t YourApplicationID:YourApiKey:YourIndex
+</code></pre></div></div>
+
+<p>The full features list is available on <a href="https://github.com/algolia/mongo-connector">Github</a> (we ♥ feature and pull-requests).</p>
+
+<h2 id="conclusion-easier-onboarding-larger-audience">Conclusion: Easier Onboarding, Larger Audience!</h2>
+
+<p>Helping our users to onboard and try Algolia without writing a single line of
+code is not only a way to attract more non-technical users; It is also a way
+to save the time of our technical but overbooked users, allowing them to be
+convinced without wasting their time before really implementing it.</p>
+
+<p>Those connectors are open-source and we will continue to improve them based on
+your feedback. Your feature requests are welcome!</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

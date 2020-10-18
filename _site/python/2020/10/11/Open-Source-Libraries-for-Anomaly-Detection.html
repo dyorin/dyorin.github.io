@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Open Source Libraries for Anomaly Detection</h1>
+</header>
+
+<span class="time">11 Oct 2020</span>
+
+  <span class="categories">
+    &raquo; <a href="/category/python">python</a>
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>Something we need to create the function to convert the number into string number with fast method, for example:
+<code class="highlighter-rouge">1000</code> to <code class="highlighter-rouge">1.0 k</code>, <code class="highlighter-rouge">1000000</code> to <code class="highlighter-rouge">1.0 m</code>, etc.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">numberize</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+    <span class="n">scales</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="mi">1000</span><span class="p">:</span> <span class="s">'k'</span><span class="p">,</span>
+        <span class="mi">1000000</span><span class="p">:</span> <span class="s">'m'</span><span class="p">,</span>
+        <span class="mi">1000000000</span><span class="p">:</span> <span class="s">'b'</span><span class="p">,</span>
+        <span class="mi">1000000000000</span><span class="p">:</span> <span class="s">'t'</span><span class="p">,</span>
+        <span class="mi">1000000000000000</span><span class="p">:</span> <span class="s">'quad'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000</span><span class="p">:</span> <span class="s">'quin'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000</span><span class="p">:</span> <span class="s">'sexti'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000</span><span class="p">:</span> <span class="s">'septi'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000</span><span class="p">:</span> <span class="s">'octi'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000</span><span class="p">:</span> <span class="s">'noni'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'deci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'undeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'duodeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'trede'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'quattu'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'quindeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'sexdeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'septend'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'octodeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'novemdeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'vigintillion'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'infinity'</span>
+    <span class="p">}</span>
+    <span class="n">number</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">number</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">digit</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">scales</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">minimum</span> <span class="o">=</span> <span class="s">'9'</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">digit</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="n">maximum</span> <span class="o">=</span> <span class="n">minimum</span> <span class="o">+</span> <span class="s">'999'</span>
+
+        <span class="k">if</span> <span class="n">number</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">scales</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s">"{0:.1f} "</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">number</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">scales</span><span class="p">))</span> <span class="o">+</span> <span class="n">name</span>
+
+        <span class="k">elif</span> <span class="n">number</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">minimum</span><span class="p">)</span> <span class="ow">and</span> <span class="n">number</span> <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">maximum</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s">"{0:.1f} "</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">number</span> <span class="o">/</span> <span class="n">digit</span><span class="p">)</span> <span class="o">+</span> <span class="n">name</span>
+    <span class="k">return</span> <span class="n">number</span>
+</code></pre></div></div>
+
+<p>Usage example;</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">numberize</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="mf">1.0</span> <span class="n">k</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">numberize</span><span class="p">(</span><span class="mi">1000000</span><span class="p">)</span>
+<span class="mf">1.0</span> <span class="n">m</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">numberize</span><span class="p">(</span><span class="mi">100120009319931</span><span class="p">)</span>
+<span class="mf">100.1</span> <span class="n">t</span>
+</code></pre></div></div>
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/python/2020/10/11/Open-Source-Libraries-for-Anomaly-Detection.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+          
+            
+            <div class="panel-body">
+              <h4>Related Posts</h4>
+              <ul>
+            
+                <li class="relatedPost">
+                  <a href="http://localhost:4000/python/django/2020/10/12/time-series-anomaly-detection.html">Time Series Anomaly Detection</a>
+                  
+                    (Categories: <a href="/category/python">python</a>, <a href="/category/django">django</a>)
+                  
+                </li>
+          
+          
+        
+      
+    
+        
+          
+      
+    
+  
+    
+      
+        
+          
+      
+    
+        
+          
+      
+    
+        
+          
+      
+    
+  
+    
+      
+        
+          
+      
+    
+        
+          
+      
+    
+        
+          
+      
+    
+        
+          
+      
+    
+  
+    
+      
+        
+          
+      
+    
+        
+          
+      
+    
+        
+          
+      
+    
+  
+    
+      
+        
+          
+            
+                <li class="relatedPost">
+                  <a href="http://localhost:4000/python/django/2020/10/11/deep-anomaly-detection.html">Deep Anomaly Detection</a>
+                  
+                    (Categories: <a href="/category/python">python</a>, <a href="/category/django">django</a>)
+                  
+                </li>
+          
+          
+        
+      
+    
+        
+          
+      
+    
+  
+    
+      
+        
+          
+      
+    
+        
+          
+      
+    
+        
+          
+      
+    
+  
+    
+      
+        
+          
+      
+    
+  
+    
+      
+        
+          
+      
+    
+        
+          
+      
+    
+        
+          
+      
+    
+  
+    
+      
+        
+          
+            
+                <li class="relatedPost">
+                  <a href="http://localhost:4000/python/django/2020/10/11/anomaly-detection-using-python.html">Open Finance: Fraud [Anomaly] Detection</a>
+                  
+                    (Categories: <a href="/category/python">python</a>, <a href="/category/django">django</a>)
+                  
+                </li>
+          
+          
+        
+      
+    
+        
+          
+      
+    
+  
+    
+      
+        
+          
+            
+                <li class="relatedPost">
+                  <a href="http://localhost:4000/python/django/2020/10/11/feature-engineering-for-anomaly-detection.html">Feature Engineering for Anomaly Detection</a>
+                  
+                    (Categories: <a href="/category/python">python</a>, <a href="/category/django">django</a>)
+                  
+                </li>
+          
+          
+        
+      
+    
+        
+          
+      
+    
+  
+    
+      
+        
+          
+      
+    
+        
+          
+      
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+  </ul>
+</div>
+
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/server/linux/others/2020/10/11/open-fianance-data-platform.html">&laquo; Open Finance: Data Platform</a>
+  
+  
+    <a class="next" href="/bash/linux/ubuntu/2020/10/11/bitcoin-a-data-perspective.html">Open Finance: Bitcoin | A Data Perspective &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>Something we need to create the function to convert the number into string number with fast method, for example:
+<code class="highlighter-rouge">1000</code> to <code class="highlighter-rouge">1.0 k</code>, <code class="highlighter-rouge">1000000</code> to <code class="highlighter-rouge">1.0 m</code>, etc.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">numberize</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+    <span class="n">scales</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="mi">1000</span><span class="p">:</span> <span class="s">'k'</span><span class="p">,</span>
+        <span class="mi">1000000</span><span class="p">:</span> <span class="s">'m'</span><span class="p">,</span>
+        <span class="mi">1000000000</span><span class="p">:</span> <span class="s">'b'</span><span class="p">,</span>
+        <span class="mi">1000000000000</span><span class="p">:</span> <span class="s">'t'</span><span class="p">,</span>
+        <span class="mi">1000000000000000</span><span class="p">:</span> <span class="s">'quad'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000</span><span class="p">:</span> <span class="s">'quin'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000</span><span class="p">:</span> <span class="s">'sexti'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000</span><span class="p">:</span> <span class="s">'septi'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000</span><span class="p">:</span> <span class="s">'octi'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000</span><span class="p">:</span> <span class="s">'noni'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'deci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'undeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'duodeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'trede'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'quattu'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'quindeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'sexdeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'septend'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'octodeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'novemdeci'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'vigintillion'</span><span class="p">,</span>
+        <span class="mi">1000000000000000000000000000000000000000000000000000000000000000000</span><span class="p">:</span> <span class="s">'infinity'</span>
+    <span class="p">}</span>
+    <span class="n">number</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">number</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">digit</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">scales</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">minimum</span> <span class="o">=</span> <span class="s">'9'</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">digit</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="n">maximum</span> <span class="o">=</span> <span class="n">minimum</span> <span class="o">+</span> <span class="s">'999'</span>
+
+        <span class="k">if</span> <span class="n">number</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">scales</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s">"{0:.1f} "</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">number</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">scales</span><span class="p">))</span> <span class="o">+</span> <span class="n">name</span>
+
+        <span class="k">elif</span> <span class="n">number</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">minimum</span><span class="p">)</span> <span class="ow">and</span> <span class="n">number</span> <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">maximum</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s">"{0:.1f} "</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">number</span> <span class="o">/</span> <span class="n">digit</span><span class="p">)</span> <span class="o">+</span> <span class="n">name</span>
+    <span class="k">return</span> <span class="n">number</span>
+</code></pre></div></div>
+
+<p>Usage example;</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">numberize</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="mf">1.0</span> <span class="n">k</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">numberize</span><span class="p">(</span><span class="mi">1000000</span><span class="p">)</span>
+<span class="mf">1.0</span> <span class="n">m</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">numberize</span><span class="p">(</span><span class="mi">100120009319931</span><span class="p">)</span>
+<span class="mf">100.1</span> <span class="n">t</span>
+</code></pre></div></div>
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

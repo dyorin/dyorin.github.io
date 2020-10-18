@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Why develop our own Unicode Library? - The Algolia Blog</h1>
+</header>
+
+<span class="time">05 Jul 2012</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>At one time or another, most developers come across bugs or problems with
+Unicode (about 3,720,000 results on google for the request <a href="http://www.google.com/search?q=unicode+bug+developer">unicode bug
+developer</a> at the time
+of this writing). Let me tell you about my experience in the last decade and
+why we have now implemented our own unicode Library to produce exactly the
+same result across devices/languages.</p>
+
+<p>I first started to use Unicode in 2004 when I was developing a Text Mining
+software specialized on information extraction. This software was fully
+implemented in C++ and I used <a href="http://www.google.com/url?q=ht
+tp%3A%2F%2Fwww-01.ibm.com%2Fsoftware%2Fglobalization%2Ficu%2F&amp;sa=D&amp;sntz=1&amp;usg=
+AFQjCNHZa7RaPrYgI3i22oL77_ZBjvF4vw">IBM ICU library</a> to be Unicode compliant (all strings were
+stored in UTF16). I also used some normalization functions of ICU based on
+decomposition, but I did not notice any major problem at that time. I started
+to understand the dark side of Unicode later when I used it in other languages
+like Java, Python, and later in Objective-C. My first surprise was when I
+understood that a simple isAlpha(unicodechar c) method can return different
+results!</p>
+
+<p>I started to look in details at the standard and downloaded UnicodeData.txt
+(the file that contains most of the information about the standard, you can
+grab the latest version
+<a href="ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt)">here</a>.</p>
+
+<p>This file contains descriptions of all Unicode characters. Third column
+represents “General Category” and is documented as:</p>
+
+<h2 id="general-categories"><strong>General Categories</strong></h2>
+
+<p>The values in this field are abbreviations for the following. Some of the
+values are normative, and some are informative. For more information, see the
+Unicode Standard.</p>
+
+<h4 id="normative-categories">Normative Categories</h4>
+
+<ul>
+  <li><strong>Lu</strong>: Letter, Uppercase</li>
+  <li><strong>Ll</strong>: Letter, Lowercase</li>
+  <li><strong>Lt</strong>: Letter, Titlecase</li>
+  <li><strong>Mn</strong>: Mark, Non-Spacing</li>
+  <li><strong>Mc</strong>: Mark, Spacing Combining</li>
+  <li><strong>Me</strong>: Mark, Enclosing</li>
+  <li><strong>Nd</strong>: Number, Decimal Digit</li>
+  <li><strong>Nl</strong>: Number, Letter</li>
+  <li><strong>No</strong>: Number, Other</li>
+  <li><strong>Zs</strong>: Separator, Space</li>
+  <li><strong>Zl</strong>: Separator, Line</li>
+  <li><strong>Zp</strong>: Separator, Paragraph</li>
+  <li><strong>Cc</strong>: Other, Control</li>
+  <li><strong>Cf</strong>: Other, Format</li>
+  <li><strong>Cs</strong>: Other, Surrogate</li>
+  <li><strong>Co</strong>: Other, Private Use</li>
+  <li><strong>Cn</strong>: Other, Not Assigned (no characters in the file have this property)</li>
+</ul>
+
+<h4 id="informative-categories">Informative Categories</h4>
+
+<ul>
+  <li><strong>Lm</strong>: Letter, Modifier</li>
+  <li><strong>Lo</strong>: Letter, Other</li>
+  <li><strong>Pc</strong>: Punctuation, Connector</li>
+  <li><strong>Pd</strong>: Punctuation, Dash</li>
+  <li><strong>Ps</strong>: Punctuation, Open</li>
+  <li><strong>Pe</strong>: Punctuation, Close</li>
+  <li><strong>Pi</strong>: Punctuation, Initial quote (may behave like Ps or Pe depending on usage)</li>
+  <li><strong>Pf</strong>: Punctuation, Final quote (may behave like Ps or Pe depending on usage)</li>
+  <li><strong>Po</strong>: Punctuation, Other</li>
+  <li><strong>Sm</strong>: Symbol, Math</li>
+  <li><strong>Sc</strong>: Symbol, Currency</li>
+  <li><strong>Sk</strong>: Symbol, Modifier</li>
+  <li><strong>So</strong>: Symbol, Other</li>
+</ul>
+
+<p>As you can see there is quite a lot of categories, some of them are very easy
+to understand like “Lu” (Letter, uppercase) and “Ll” (Letter, lowercase) but
+some of them are more complex like “Lo” (Letter, other)  and “No” (Number,
+other), and this is exactly where the first problem begins.</p>
+
+<p>Let’s take the unicode character U+00BD(½) as an example. It is quite common
+to describe spare parts and is defined as “No”… except that some unicode
+libraries consider that this is not a number and return false to
+isNumber(unicodeChar) method (e.g., Objective-C).</p>
+
+<p>In fact the two most used methods, isAlpha(unicodeChar) and
+isNumber(unicodeChar), are not directly defined by the Unicode standard and
+are subject to interpretation.</p>
+
+<p>The consequence is that results are not the same across devices/languages! In
+our case this is a problem because our compiled index is portable, and we want
+to have exactly the same results on different devices/languages.</p>
+
+<p>However, this is not the only problem! Unicode normalization is also a tricky
+topic. The Unicode standard defines a way to decompose characters (Characters
+decomposition mapping), for example U+00E0(à) which is decomposed as U+0061(a)</p>
+<ul>
+  <li>U+0300( ̀). But most of the time you do not want a decomposition but a
+normalization: get the most basic form of a string (lowercase without accents,
+marks, …). This is key to be able to search and compare words. For example,
+the normalization of the French word “Hétérogénéité” will be normalized as
+“heterogeneite”.</li>
+</ul>
+
+<p>To compute this normalized form, most people compute the lowercase form of a
+word (well defined by the Unicode standard), then compute the decomposed form
+and finally remove all the diacritics. However, this is not enough.
+Normalization can not always be reduced to just a matter of removing marks.
+For example the standard German letter ß is widely used and
+replaced/understood as “ss” (you can enter ß in your favorite web search
+engine and you will discover that it also search for “ss”). The problem is
+that there is no decomposition for “ß” in the Unicode standard because this
+letter is not a letter with marks.</p>
+
+<p>To solve that problem, we need to look in the <a href="http://unicode.org/repos/cldr-tmp/trunk/diff/supplemental/character_fallback_substitutions.html">Character Fallback Substitution
+table</a> that is not
+part of most of Unicode library implementations. This substitution table
+defines that “ß” can be replaced by “ss,”. There are plenty of other examples;
+For instance, 0153(œ) and 00E6(æ), letters of the French language, can be
+replaced by “oe” and “ae”.</p>
+
+<p>At the end, this led us to implement our own Unicode library to ensure that
+our isAlpha(unicodechar) and isNumber(unicodechar) methods have a unique
+behavior on all devices/languages and to implement a normalize(unicodestring)
+method that contains character fallback substitution table. By the way our
+implementation of normalization is far more efficient because we implemented
+it in one step instead of three (lowercase + decomposition + diacritics
+removal).</p>
+
+<p>I hope you found this post useful and gained a better understanding of the
+Unicode standard and the limits of standard Unicode libraries. Feel free to
+contribute comments or ask for precisions.</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2012/07/05/why-develop-our-own-unicode-library.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2012/07/03/great-discussions-at-leweb12-london.html">&laquo; Great discussions at LeWeb'12 London</a>
+  
+  
+    <a class="next" href="/2012/07/08/were-participating-to-the-evernote-devcup.html">Search for Evernote: We're in the Evernote DevCup! &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>At one time or another, most developers come across bugs or problems with
+Unicode (about 3,720,000 results on google for the request <a href="http://www.google.com/search?q=unicode+bug+developer">unicode bug
+developer</a> at the time
+of this writing). Let me tell you about my experience in the last decade and
+why we have now implemented our own unicode Library to produce exactly the
+same result across devices/languages.</p>
+
+<p>I first started to use Unicode in 2004 when I was developing a Text Mining
+software specialized on information extraction. This software was fully
+implemented in C++ and I used <a href="http://www.google.com/url?q=ht
+tp%3A%2F%2Fwww-01.ibm.com%2Fsoftware%2Fglobalization%2Ficu%2F&amp;sa=D&amp;sntz=1&amp;usg=
+AFQjCNHZa7RaPrYgI3i22oL77_ZBjvF4vw">IBM ICU library</a> to be Unicode compliant (all strings were
+stored in UTF16). I also used some normalization functions of ICU based on
+decomposition, but I did not notice any major problem at that time. I started
+to understand the dark side of Unicode later when I used it in other languages
+like Java, Python, and later in Objective-C. My first surprise was when I
+understood that a simple isAlpha(unicodechar c) method can return different
+results!</p>
+
+<p>I started to look in details at the standard and downloaded UnicodeData.txt
+(the file that contains most of the information about the standard, you can
+grab the latest version
+<a href="ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt)">here</a>.</p>
+
+<p>This file contains descriptions of all Unicode characters. Third column
+represents “General Category” and is documented as:</p>
+
+<h2 id="general-categories"><strong>General Categories</strong></h2>
+
+<p>The values in this field are abbreviations for the following. Some of the
+values are normative, and some are informative. For more information, see the
+Unicode Standard.</p>
+
+<h4 id="normative-categories">Normative Categories</h4>
+
+<ul>
+  <li><strong>Lu</strong>: Letter, Uppercase</li>
+  <li><strong>Ll</strong>: Letter, Lowercase</li>
+  <li><strong>Lt</strong>: Letter, Titlecase</li>
+  <li><strong>Mn</strong>: Mark, Non-Spacing</li>
+  <li><strong>Mc</strong>: Mark, Spacing Combining</li>
+  <li><strong>Me</strong>: Mark, Enclosing</li>
+  <li><strong>Nd</strong>: Number, Decimal Digit</li>
+  <li><strong>Nl</strong>: Number, Letter</li>
+  <li><strong>No</strong>: Number, Other</li>
+  <li><strong>Zs</strong>: Separator, Space</li>
+  <li><strong>Zl</strong>: Separator, Line</li>
+  <li><strong>Zp</strong>: Separator, Paragraph</li>
+  <li><strong>Cc</strong>: Other, Control</li>
+  <li><strong>Cf</strong>: Other, Format</li>
+  <li><strong>Cs</strong>: Other, Surrogate</li>
+  <li><strong>Co</strong>: Other, Private Use</li>
+  <li><strong>Cn</strong>: Other, Not Assigned (no characters in the file have this property)</li>
+</ul>
+
+<h4 id="informative-categories">Informative Categories</h4>
+
+<ul>
+  <li><strong>Lm</strong>: Letter, Modifier</li>
+  <li><strong>Lo</strong>: Letter, Other</li>
+  <li><strong>Pc</strong>: Punctuation, Connector</li>
+  <li><strong>Pd</strong>: Punctuation, Dash</li>
+  <li><strong>Ps</strong>: Punctuation, Open</li>
+  <li><strong>Pe</strong>: Punctuation, Close</li>
+  <li><strong>Pi</strong>: Punctuation, Initial quote (may behave like Ps or Pe depending on usage)</li>
+  <li><strong>Pf</strong>: Punctuation, Final quote (may behave like Ps or Pe depending on usage)</li>
+  <li><strong>Po</strong>: Punctuation, Other</li>
+  <li><strong>Sm</strong>: Symbol, Math</li>
+  <li><strong>Sc</strong>: Symbol, Currency</li>
+  <li><strong>Sk</strong>: Symbol, Modifier</li>
+  <li><strong>So</strong>: Symbol, Other</li>
+</ul>
+
+<p>As you can see there is quite a lot of categories, some of them are very easy
+to understand like “Lu” (Letter, uppercase) and “Ll” (Letter, lowercase) but
+some of them are more complex like “Lo” (Letter, other)  and “No” (Number,
+other), and this is exactly where the first problem begins.</p>
+
+<p>Let’s take the unicode character U+00BD(½) as an example. It is quite common
+to describe spare parts and is defined as “No”… except that some unicode
+libraries consider that this is not a number and return false to
+isNumber(unicodeChar) method (e.g., Objective-C).</p>
+
+<p>In fact the two most used methods, isAlpha(unicodeChar) and
+isNumber(unicodeChar), are not directly defined by the Unicode standard and
+are subject to interpretation.</p>
+
+<p>The consequence is that results are not the same across devices/languages! In
+our case this is a problem because our compiled index is portable, and we want
+to have exactly the same results on different devices/languages.</p>
+
+<p>However, this is not the only problem! Unicode normalization is also a tricky
+topic. The Unicode standard defines a way to decompose characters (Characters
+decomposition mapping), for example U+00E0(à) which is decomposed as U+0061(a)</p>
+<ul>
+  <li>U+0300( ̀). But most of the time you do not want a decomposition but a
+normalization: get the most basic form of a string (lowercase without accents,
+marks, …). This is key to be able to search and compare words. For example,
+the normalization of the French word “Hétérogénéité” will be normalized as
+“heterogeneite”.</li>
+</ul>
+
+<p>To compute this normalized form, most people compute the lowercase form of a
+word (well defined by the Unicode standard), then compute the decomposed form
+and finally remove all the diacritics. However, this is not enough.
+Normalization can not always be reduced to just a matter of removing marks.
+For example the standard German letter ß is widely used and
+replaced/understood as “ss” (you can enter ß in your favorite web search
+engine and you will discover that it also search for “ss”). The problem is
+that there is no decomposition for “ß” in the Unicode standard because this
+letter is not a letter with marks.</p>
+
+<p>To solve that problem, we need to look in the <a href="http://unicode.org/repos/cldr-tmp/trunk/diff/supplemental/character_fallback_substitutions.html">Character Fallback Substitution
+table</a> that is not
+part of most of Unicode library implementations. This substitution table
+defines that “ß” can be replaced by “ss,”. There are plenty of other examples;
+For instance, 0153(œ) and 00E6(æ), letters of the French language, can be
+replaced by “oe” and “ae”.</p>
+
+<p>At the end, this led us to implement our own Unicode library to ensure that
+our isAlpha(unicodechar) and isNumber(unicodechar) methods have a unique
+behavior on all devices/languages and to implement a normalize(unicodestring)
+method that contains character fallback substitution table. By the way our
+implementation of normalization is far more efficient because we implemented
+it in one step instead of three (lowercase + decomposition + diacritics
+removal).</p>
+
+<p>I hope you found this post useful and gained a better understanding of the
+Unicode standard and the limits of standard Unicode libraries. Feel free to
+contribute comments or ask for precisions.</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

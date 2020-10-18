@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Hacker News search: 6.5 million articles and comments at your fingertips</h1>
+</header>
+
+<span class="time">24 Jan 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>We are <a href="https://news.ycombinator.com">Hacker News</a> readers and probably just
+like you, there is not a day that goes by we don’t use it. It is a little like
+checking the weather app of the tech world. Long story short, Hacker News is
+awesome, and we wanted to add our two cents to make it even greater to use.</p>
+
+<p>Indeed, here is our problem: how do we instantly access the old posts we wish
+we had saved?</p>
+
+<h2 id="powering-a-newhacker-news-search-engine">Powering a new Hacker News search engine</h2>
+
+<p>Up until now we’ve been using <a href="http://www.hnsearch.com">hnsearch.com</a>,
+maintained for years by the great folks at <a href="http://octopart.com/">Octopart</a>. I
+hope we speak on behalf of the HN community here, we are all grateful for the
+work they put in hnsearch.com and they inspired us to pursue their effort.</p>
+
+<p>Back in September 2013, we created a “<a href="https://news.ycombinator.com/item?id=6476003">homemade Hacker News
+crawler</a>” and built a search
+engine with the data we could get. It was not perfect but somehow, it did the
+job fine.</p>
+
+<p><a href="http://blog.ycombinator.com/algolia-
+yc-w14-launches-a-search-api-that-lets-you-provide-apple-spotlight-like-
+realtime-search-for-your-app-or-service">Now part of the Ycombinator W14 batch</a>, we have a direct access to the data
+and it has allowed us to provide instant search for the entire content of
+Hacker News, 1.2 million articles, 5.2 million comments as of today. See for
+yourself right here: <a href="http://hn.algolia.com/">hn.algolia.com</a></p>
+
+<h2 id="here-is-how-we-did-it">Here is how we did it</h2>
+
+<ul>
+  <li>
+    <h3 id="hacker-news-api-access">Hacker News API access</h3>
+
+    <ul>
+      <li>YC provides us a private API access to fetch batches of 1000 items (an item being a comment or a post). Every two minutes, we update our database with the latest 1000 items. Last 48,000 items are refreshed every hour to keep the number of votes and comments up to date.</li>
+    </ul>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Yep, that's a Lisp API :)
+EXPORT_REGEXP = %r{^((d+) (story|comment|poll|pollopt) "(.+)" (d+) (?:nil|"(.*)") (?:nil|"(.+)") (?:nil|"(.*)") (?:nil|-?(d+)) (?:nil|(([d ]+))) (?:nil|(d+)))$}
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <h3 id="thumbnails-generation">Thumbnails generation</h3>
+
+    <ul>
+      <li>We use <a href="https://code.google.com/p/wkhtmltopdf/">wkhtmltoimage</a> to render the URLs and generate the associated thumbnails. Playing with connection timeouts and JavaScript infinite loops was a pleasure:</li>
+    </ul>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(timeout 60 xvfb-run --auto-servernum --server-args="-screen 0, 1024x768x24" 
+wkhtmltoimage-amd64 --height 768 --use-xserver--javascript-delay 30000 "$URL" "$FILE" || 
+timeout 60 xvfb-run --auto-servernum --server-args="-screen 0, 1024x768x24" 
+wkhtmltoimage-amd64 --height 768 --use-xserver --disable-javascript "$URL" "$FILE") &amp;&amp; 
+convert "$FILE" -resize '100!x100' "$FILE"
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <h3 id="thumbnails-storage">Thumbnails storage</h3>
+
+    <ul>
+      <li>Thumbnails are resized and stored on a S3 bucket.</li>
+    </ul>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>AWS::S3::S3Object.store("#{id}.png", open(temp_file), 'hnsearch', access: :public_read)
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <h3 id="thumbnails-distribution">Thumbnails distribution</h3>
+
+    <ul>
+      <li>We configured a CloudFront instance targeting the S3 bucket to distribute thumbnails with low latency and high data transfer speed. We followed Amazon’s associated <a href="http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/MigrateS3ToCloudFront.html">developer guide</a>.</li>
+    </ul>
+  </li>
+  <li>
+    <h3 id="indexing">Indexing</h3>
+
+    <ul>
+      <li>We used the “<a href="https://github.com/algolia/algoliasearch-rails">algoliasearch-rails</a>” gem and a standard (Ruby on Rails) MySQL-backed ActiveRecord setup. Indexing is performed automatically as soon as new items are added to the database, providing a near-realtime experience.</li>
+    </ul>
+  </li>
+  <li>
+    <h3 id="configuration">Configuration</h3>
+
+    <div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Item</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+  <span class="kp">include</span> <span class="no">AlgoliaSearch</span>
+    
+  <span class="n">algoliasearch</span> <span class="ss">per_environment: </span><span class="kp">true</span> <span class="k">do</span>
+    <span class="c1"># the list of attributes sent to Algolia's API</span>
+    <span class="n">attribute</span> <span class="ss">:created_at</span><span class="p">,</span> <span class="ss">:title</span><span class="p">,</span> <span class="ss">:url</span><span class="p">,</span> <span class="ss">:author</span><span class="p">,</span> <span class="ss">:points</span><span class="p">,</span> <span class="ss">:story_text</span><span class="p">,</span> <span class="ss">:comment_text</span><span class="p">,</span> <span class="ss">:author</span><span class="p">,</span> <span class="ss">:num_comments</span><span class="p">,</span> <span class="ss">:story_id</span><span class="p">,</span> <span class="ss">:story_title</span><span class="p">,</span> <span class="ss">:story_url</span>
+    <span class="n">attribute</span> <span class="ss">:created_at_i</span> <span class="k">do</span>
+      <span class="n">created_at</span><span class="p">.</span><span class="nf">to_i</span>
+    <span class="k">end</span>
+    
+    <span class="c1"># The order of the attributes sets their respective importance.</span>
+    <span class="c1"># `title` is more important than `{story,comment}_text`, `{story,comment}_text` more than `url`, `url` more than `author`</span>
+    <span class="c1"># btw, do not take into account position to avoid first word match boost</span>
+    <span class="n">attributesToIndex</span> <span class="p">[</span><span class="s1">'unordered(title)'</span><span class="p">,</span> <span class="s1">'unordered(story_text)'</span><span class="p">,</span> <span class="s1">'unordered(comment_text)'</span><span class="p">,</span> <span class="s1">'unordered(url)'</span><span class="p">,</span> <span class="s1">'author'</span><span class="p">,</span> <span class="s1">'created_at_i'</span><span class="p">]</span>
+    
+    <span class="c1"># add tags used for filtering</span>
+    <span class="n">tags</span> <span class="k">do</span>
+      <span class="p">[</span><span class="n">item_type</span><span class="p">,</span> <span class="s2">"author_</span><span class="si">#{</span><span class="n">author</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"story_</span><span class="si">#{</span><span class="n">story_id</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+    <span class="k">end</span>
+    
+    <span class="c1"># Custom ranking allows to automatically sort the results by a custom criteria</span>
+    <span class="c1"># in this case, a decreasing sort of the number of HN points and comments.</span>
+    <span class="n">customRanking</span> <span class="p">[</span><span class="s1">'desc(points)'</span><span class="p">,</span> <span class="s1">'desc(num_comments)'</span><span class="p">]</span>
+    
+    <span class="c1"># controls the way results are sorted sorting on the following 4 criteria (one after another)</span>
+    <span class="c1"># I removed the 'exact' match critera (improve 1-words query relevance, doesn't fit HNSearch needs)</span>
+    <span class="n">ranking</span> <span class="p">[</span><span class="s1">'typo'</span><span class="p">,</span> <span class="s1">'proximity'</span><span class="p">,</span> <span class="s1">'attribute'</span><span class="p">,</span> <span class="s1">'custom'</span><span class="p">]</span>
+    
+    <span class="c1"># google+, $1.5M raises, C#: we love you</span>
+    <span class="n">separatorsToIndex</span> <span class="s1">'+#$'</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">story_text</span>
+    <span class="n">item_type_cd</span> <span class="o">!=</span> <span class="no">Item</span><span class="p">.</span><span class="nf">comment</span> <span class="p">?</span> <span class="n">text</span> <span class="p">:</span> <span class="kp">nil</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">story_title</span>
+    <span class="n">comment?</span> <span class="o">&amp;&amp;</span> <span class="n">story</span> <span class="p">?</span> <span class="n">story</span><span class="p">.</span><span class="nf">title</span> <span class="p">:</span> <span class="kp">nil</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">story_url</span>
+    <span class="n">comment?</span> <span class="o">&amp;&amp;</span> <span class="n">story</span> <span class="p">?</span> <span class="n">story</span><span class="p">.</span><span class="nf">url</span> <span class="p">:</span> <span class="kp">nil</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">comment_text</span>
+    <span class="n">comment?</span> <span class="p">?</span> <span class="n">text</span> <span class="p">:</span> <span class="kp">nil</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">comment?</span>
+    <span class="n">item_type_cd</span> <span class="o">==</span> <span class="no">Item</span><span class="p">.</span><span class="nf">comment</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">num_comments</span>
+    <span class="n">item_type_cd</span> <span class="o">==</span> <span class="no">Item</span><span class="p">.</span><span class="nf">story</span> <span class="p">?</span> <span class="n">story_comments</span><span class="p">.</span><span class="nf">count</span> <span class="p">:</span> <span class="kp">nil</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <h3 id="search">Search</h3>
+
+    <ul>
+      <li>Queries are sent directly to our API via the<a href="https://github.com/algolia/algoliasearch-client-js"> javascript client</a>, the javascript code uses a public API-Key that can only perform queries.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="seeking-feedback-from-the-community">Seeking feedback from the community</h2>
+
+<p>There is still room for improvement and we would love to know how you are
+searching for news on HN. What is important for you? Are you searching by
+date, by upvote, by comment or by user? All together maybe?</p>
+
+<p>We would love to have your feedback! Don’t hesitate to checkout the code: <a href="https://github.com/algolia/hn-search">We
+open-sourced it</a>.</p>
+
+<p>Special thanks to the <a href="http://octopart.com/">Octopart</a> and
+<a href="http://ycombinator.com/">YC</a> teams for making this experience possible!</p>
+
+<p>Give it a try now: <a href="http://hn.algolia.com">hn.algolia.com</a></p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/01/24/hacker-news-search-algolia.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/01/18/search-grader-engine-performing.html">&laquo; Search Grader by Algolia: How does your search engine perform?</a>
+  
+  
+    <a class="next" href="/2014/01/29/postmortem-todays-8min-indexing-downtime.html">Postmortem of today's 8min indexing downtime &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>We are <a href="https://news.ycombinator.com">Hacker News</a> readers and probably just
+like you, there is not a day that goes by we don’t use it. It is a little like
+checking the weather app of the tech world. Long story short, Hacker News is
+awesome, and we wanted to add our two cents to make it even greater to use.</p>
+
+<p>Indeed, here is our problem: how do we instantly access the old posts we wish
+we had saved?</p>
+
+<h2 id="powering-a-newhacker-news-search-engine">Powering a new Hacker News search engine</h2>
+
+<p>Up until now we’ve been using <a href="http://www.hnsearch.com">hnsearch.com</a>,
+maintained for years by the great folks at <a href="http://octopart.com/">Octopart</a>. I
+hope we speak on behalf of the HN community here, we are all grateful for the
+work they put in hnsearch.com and they inspired us to pursue their effort.</p>
+
+<p>Back in September 2013, we created a “<a href="https://news.ycombinator.com/item?id=6476003">homemade Hacker News
+crawler</a>” and built a search
+engine with the data we could get. It was not perfect but somehow, it did the
+job fine.</p>
+
+<p><a href="http://blog.ycombinator.com/algolia-
+yc-w14-launches-a-search-api-that-lets-you-provide-apple-spotlight-like-
+realtime-search-for-your-app-or-service">Now part of the Ycombinator W14 batch</a>, we have a direct access to the data
+and it has allowed us to provide instant search for the entire content of
+Hacker News, 1.2 million articles, 5.2 million comments as of today. See for
+yourself right here: <a href="http://hn.algolia.com/">hn.algolia.com</a></p>
+
+<h2 id="here-is-how-we-did-it">Here is how we did it</h2>
+
+<ul>
+  <li>
+    <h3 id="hacker-news-api-access">Hacker News API access</h3>
+
+    <ul>
+      <li>YC provides us a private API access to fetch batches of 1000 items (an item being a comment or a post). Every two minutes, we update our database with the latest 1000 items. Last 48,000 items are refreshed every hour to keep the number of votes and comments up to date.</li>
+    </ul>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Yep, that's a Lisp API :)
+EXPORT_REGEXP = %r{^((d+) (story|comment|poll|pollopt) "(.+)" (d+) (?:nil|"(.*)") (?:nil|"(.+)") (?:nil|"(.*)") (?:nil|-?(d+)) (?:nil|(([d ]+))) (?:nil|(d+)))$}
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <h3 id="thumbnails-generation">Thumbnails generation</h3>
+
+    <ul>
+      <li>We use <a href="https://code.google.com/p/wkhtmltopdf/">wkhtmltoimage</a> to render the URLs and generate the associated thumbnails. Playing with connection timeouts and JavaScript infinite loops was a pleasure:</li>
+    </ul>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(timeout 60 xvfb-run --auto-servernum --server-args="-screen 0, 1024x768x24" 
+wkhtmltoimage-amd64 --height 768 --use-xserver--javascript-delay 30000 "$URL" "$FILE" || 
+timeout 60 xvfb-run --auto-servernum --server-args="-screen 0, 1024x768x24" 
+wkhtmltoimage-amd64 --height 768 --use-xserver --disable-javascript "$URL" "$FILE") &amp;&amp; 
+convert "$FILE" -resize '100!x100' "$FILE"
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <h3 id="thumbnails-storage">Thumbnails storage</h3>
+
+    <ul>
+      <li>Thumbnails are resized and stored on a S3 bucket.</li>
+    </ul>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>AWS::S3::S3Object.store("#{id}.png", open(temp_file), 'hnsearch', access: :public_read)
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <h3 id="thumbnails-distribution">Thumbnails distribution</h3>
+
+    <ul>
+      <li>We configured a CloudFront instance targeting the S3 bucket to distribute thumbnails with low latency and high data transfer speed. We followed Amazon’s associated <a href="http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/MigrateS3ToCloudFront.html">developer guide</a>.</li>
+    </ul>
+  </li>
+  <li>
+    <h3 id="indexing">Indexing</h3>
+
+    <ul>
+      <li>We used the “<a href="https://github.com/algolia/algoliasearch-rails">algoliasearch-rails</a>” gem and a standard (Ruby on Rails) MySQL-backed ActiveRecord setup. Indexing is performed automatically as soon as new items are added to the database, providing a near-realtime experience.</li>
+    </ul>
+  </li>
+  <li>
+    <h3 id="configuration">Configuration</h3>
+
+    <div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Item</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+  <span class="kp">include</span> <span class="no">AlgoliaSearch</span>
+    
+  <span class="n">algoliasearch</span> <span class="ss">per_environment: </span><span class="kp">true</span> <span class="k">do</span>
+    <span class="c1"># the list of attributes sent to Algolia's API</span>
+    <span class="n">attribute</span> <span class="ss">:created_at</span><span class="p">,</span> <span class="ss">:title</span><span class="p">,</span> <span class="ss">:url</span><span class="p">,</span> <span class="ss">:author</span><span class="p">,</span> <span class="ss">:points</span><span class="p">,</span> <span class="ss">:story_text</span><span class="p">,</span> <span class="ss">:comment_text</span><span class="p">,</span> <span class="ss">:author</span><span class="p">,</span> <span class="ss">:num_comments</span><span class="p">,</span> <span class="ss">:story_id</span><span class="p">,</span> <span class="ss">:story_title</span><span class="p">,</span> <span class="ss">:story_url</span>
+    <span class="n">attribute</span> <span class="ss">:created_at_i</span> <span class="k">do</span>
+      <span class="n">created_at</span><span class="p">.</span><span class="nf">to_i</span>
+    <span class="k">end</span>
+    
+    <span class="c1"># The order of the attributes sets their respective importance.</span>
+    <span class="c1"># `title` is more important than `{story,comment}_text`, `{story,comment}_text` more than `url`, `url` more than `author`</span>
+    <span class="c1"># btw, do not take into account position to avoid first word match boost</span>
+    <span class="n">attributesToIndex</span> <span class="p">[</span><span class="s1">'unordered(title)'</span><span class="p">,</span> <span class="s1">'unordered(story_text)'</span><span class="p">,</span> <span class="s1">'unordered(comment_text)'</span><span class="p">,</span> <span class="s1">'unordered(url)'</span><span class="p">,</span> <span class="s1">'author'</span><span class="p">,</span> <span class="s1">'created_at_i'</span><span class="p">]</span>
+    
+    <span class="c1"># add tags used for filtering</span>
+    <span class="n">tags</span> <span class="k">do</span>
+      <span class="p">[</span><span class="n">item_type</span><span class="p">,</span> <span class="s2">"author_</span><span class="si">#{</span><span class="n">author</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"story_</span><span class="si">#{</span><span class="n">story_id</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+    <span class="k">end</span>
+    
+    <span class="c1"># Custom ranking allows to automatically sort the results by a custom criteria</span>
+    <span class="c1"># in this case, a decreasing sort of the number of HN points and comments.</span>
+    <span class="n">customRanking</span> <span class="p">[</span><span class="s1">'desc(points)'</span><span class="p">,</span> <span class="s1">'desc(num_comments)'</span><span class="p">]</span>
+    
+    <span class="c1"># controls the way results are sorted sorting on the following 4 criteria (one after another)</span>
+    <span class="c1"># I removed the 'exact' match critera (improve 1-words query relevance, doesn't fit HNSearch needs)</span>
+    <span class="n">ranking</span> <span class="p">[</span><span class="s1">'typo'</span><span class="p">,</span> <span class="s1">'proximity'</span><span class="p">,</span> <span class="s1">'attribute'</span><span class="p">,</span> <span class="s1">'custom'</span><span class="p">]</span>
+    
+    <span class="c1"># google+, $1.5M raises, C#: we love you</span>
+    <span class="n">separatorsToIndex</span> <span class="s1">'+#$'</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">story_text</span>
+    <span class="n">item_type_cd</span> <span class="o">!=</span> <span class="no">Item</span><span class="p">.</span><span class="nf">comment</span> <span class="p">?</span> <span class="n">text</span> <span class="p">:</span> <span class="kp">nil</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">story_title</span>
+    <span class="n">comment?</span> <span class="o">&amp;&amp;</span> <span class="n">story</span> <span class="p">?</span> <span class="n">story</span><span class="p">.</span><span class="nf">title</span> <span class="p">:</span> <span class="kp">nil</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">story_url</span>
+    <span class="n">comment?</span> <span class="o">&amp;&amp;</span> <span class="n">story</span> <span class="p">?</span> <span class="n">story</span><span class="p">.</span><span class="nf">url</span> <span class="p">:</span> <span class="kp">nil</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">comment_text</span>
+    <span class="n">comment?</span> <span class="p">?</span> <span class="n">text</span> <span class="p">:</span> <span class="kp">nil</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">comment?</span>
+    <span class="n">item_type_cd</span> <span class="o">==</span> <span class="no">Item</span><span class="p">.</span><span class="nf">comment</span>
+  <span class="k">end</span>
+    
+  <span class="k">def</span> <span class="nf">num_comments</span>
+    <span class="n">item_type_cd</span> <span class="o">==</span> <span class="no">Item</span><span class="p">.</span><span class="nf">story</span> <span class="p">?</span> <span class="n">story_comments</span><span class="p">.</span><span class="nf">count</span> <span class="p">:</span> <span class="kp">nil</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <h3 id="search">Search</h3>
+
+    <ul>
+      <li>Queries are sent directly to our API via the<a href="https://github.com/algolia/algoliasearch-client-js"> javascript client</a>, the javascript code uses a public API-Key that can only perform queries.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="seeking-feedback-from-the-community">Seeking feedback from the community</h2>
+
+<p>There is still room for improvement and we would love to know how you are
+searching for news on HN. What is important for you? Are you searching by
+date, by upvote, by comment or by user? All together maybe?</p>
+
+<p>We would love to have your feedback! Don’t hesitate to checkout the code: <a href="https://github.com/algolia/hn-search">We
+open-sourced it</a>.</p>
+
+<p>Special thanks to the <a href="http://octopart.com/">Octopart</a> and
+<a href="http://ycombinator.com/">YC</a> teams for making this experience possible!</p>
+
+<p>Give it a try now: <a href="http://hn.algolia.com">hn.algolia.com</a></p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

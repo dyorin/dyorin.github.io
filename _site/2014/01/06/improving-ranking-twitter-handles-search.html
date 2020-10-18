@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Improving Search for Twitter Handles</h1>
+</header>
+
+<span class="time">06 Jan 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>Hello Twitter,</p>
+
+<p>I have been using your service for awhile, and I love it!</p>
+
+<p>At first, I was skeptical about what you could offer: Broadcasting to all my
+friends that I was eating a pizza, or taking a walk, is not really my cup of
+tea. But 3 years ago I figured out what Twitter was really meant for and how
+it could help me in a totally different way from what I first thought:</p>
+
+<ul>
+  <li>sharing interesting articles,</li>
+  <li>checking if /replace by the service provider you want/ is down,</li>
+  <li>or catching up on HackerNews.</li>
+</ul>
+
+<p>More recently, I discovered you had a feature that could help me even more: I
+can now ask for support by tweeting. Tweeting is often faster and more
+productive than sending an email. You taught me to include the recipient’s
+Handle in my tweets, and your current Handle auto-completion implementation
+works pretty well: but what if you could provide a <strong>better typo-tolerance and
+ranking</strong>? (I’m NOT speaking about your official OSX/iOS native clients and
+its <a href="http://blog.algolia.com/why-autocomplete-in-twitter-on-mobile-sucks/">totally unusable auto-completion feature</a>… btw, could you explain me why it
+is different from the one on your website?).</p>
+
+<p>I have been leading a search-engine development team over the last 5 years and
+I’m now VP of engineering at Algolia. I am aware that considering my job, I
+have kind of an “expert” point of view about search. But search has become so
+essential that I am convinced it <strong>must</strong> be irreproachable. Did you know
+that 1.7M+ people are currently following</p>
+
+<p>expecting great things from your search-engine, Twitter :) Here is how I would
+improve search for Twitter handles:</p>
+
+<p>For example, it would be nice if I could find President
+<a href="https://twitter.com/barackobama">@barackobama</a> with his last name:</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2013/12/Screen-Shot-2013-12-23-at-11.40.09.png"><img src="./assets/Screen-Shot-2013-12-23-at-11.40.09-263x300.png" alt="Search for Twitter handles including @obama yields less-than-stellar
+results." /></a></p>
+
+<p>Same for Justin:</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2013/12/Screen-Shot-2013-12-23-at-11.42.01.png"><img src="./assets/Screen-Shot-2013-12-23-at-11.42.01-262x300.png" alt="Search for Twitter handles that could be Justin Bieber's yields less-than-
+stellar results." /></a></p>
+
+<p>Typo-tolerance is now a must-have, especially because we’re all using
+smartphones and tablets:</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2013/12/Screen-Shot-2013-12-23-at-11.38.19.png"><img src="./assets/Screen-Shot-2013-12-23-at-11.38.19-263x300.png" alt="Search for Twitter handles should have typo tolerance." /></a></p>
+
+<p>More and more handles are now prefixed/suffixed by “official”, which makes
+finding <a href="https://twitter.com/officialadele">@OfficialAdele</a> just impossible:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2013/12/Screen-Shot-2013-12-23-at-11.47.52.png"><img src="./assets/Screen-Shot-2013-12-23-at-11.47.52.png" alt="Search for Twitter handles that start with @official is broken." /></a></p>
+
+<p><strong>For sure we can improve it, let’s code!</strong></p>
+
+<p>First of all Twitter, I need your Handles database :)</p>
+
+<ul>
+  <li>I used your <a href="https://dev.twitter.com/docs/streaming-apis">Streaming API</a> to crawl about 20M+ accounts in ~2 weeks: it’s not blazing fast but I must admit it does the job (and it’s free). That’s about 5 lines of Ruby with <a href="https://github.com/tweetstream/tweetstream">TweetStream</a>, good job guys!</li>
+  <li>and <a href="https://github.com/bmc/daemonize">Daemonize</a> to create a bin/crawler executable.</li>
+</ul>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#! /usr/bin/env ruby</span>
+
+<span class="nb">require</span> <span class="no">File</span><span class="p">.</span><span class="nf">expand_path</span><span class="p">(</span><span class="no">File</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="no">File</span><span class="p">.</span><span class="nf">dirname</span><span class="p">(</span><span class="kp">__FILE__</span><span class="p">),</span> <span class="s1">'..'</span><span class="p">,</span> <span class="s1">'config'</span><span class="p">,</span> <span class="s1">'environment'</span><span class="p">))</span>
+
+<span class="n">daemon</span> <span class="o">=</span> <span class="no">TweetStream</span><span class="o">::</span><span class="no">Daemon</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s1">'crawler'</span><span class="p">,</span> <span class="ss">:log_output</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">)</span>
+<span class="n">daemon</span><span class="p">.</span><span class="nf">on_inited</span> <span class="k">do</span>
+  <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span><span class="p">.</span><span class="nf">connection</span><span class="p">.</span><span class="nf">reconnect!</span>
+  <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span><span class="p">.</span><span class="nf">logger</span> <span class="o">=</span> <span class="no">Logger</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="no">File</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="no">Rails</span><span class="p">.</span><span class="nf">root</span><span class="p">,</span> <span class="s1">'log/stream.log'</span><span class="p">),</span> <span class="s1">'w+'</span><span class="p">)</span>
+<span class="k">end</span>
+<span class="n">daemon</span><span class="p">.</span><span class="nf">on_error</span> <span class="k">do</span> <span class="o">|</span><span class="n">message</span><span class="o">|</span>
+  <span class="nb">puts</span> <span class="s2">"Error: </span><span class="si">#{</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">end</span>
+<span class="n">daemon</span><span class="p">.</span><span class="nf">sample</span> <span class="k">do</span> <span class="o">|</span><span class="n">status</span><span class="o">|</span>
+  <span class="no">Handle</span><span class="p">.</span><span class="nf">create_from_status</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>For each new tweet you send to me, I store the author (name + screen_name +
+description + followers_count) and all his/her user mentions.</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Handle</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">create_from_user</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="no">Handle</span><span class="p">.</span><span class="nf">find_or_initialize_by</span><span class="p">(</span><span class="ss">screen_name: </span><span class="n">user</span><span class="p">.</span><span class="nf">screen_name</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="n">h</span><span class="p">.</span><span class="nf">screen_name</span> <span class="k">if</span> <span class="n">h</span><span class="p">.</span><span class="nf">new_record?</span>
+    <span class="n">h</span><span class="p">.</span><span class="nf">name</span> <span class="o">=</span> <span class="n">user</span><span class="p">.</span><span class="nf">name</span>
+    <span class="n">h</span><span class="p">.</span><span class="nf">description</span> <span class="o">=</span> <span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="nf">description</span> <span class="o">||</span> <span class="s2">""</span><span class="p">)[</span><span class="mi">0</span><span class="o">..</span><span class="mi">255</span><span class="p">]</span>
+    <span class="n">h</span><span class="p">.</span><span class="nf">followers_count</span> <span class="o">=</span> <span class="n">user</span><span class="p">.</span><span class="nf">followers_count</span>
+    <span class="n">h</span><span class="p">.</span><span class="nf">updated_at</span> <span class="o">||=</span> <span class="no">DateTime</span><span class="p">.</span><span class="nf">now</span>
+    <span class="n">h</span><span class="p">.</span><span class="nf">save</span>
+    <span class="n">h</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">create_from_status</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+    <span class="no">Handle</span><span class="p">.</span><span class="nf">create_from_user</span><span class="p">(</span><span class="n">status</span><span class="p">.</span><span class="nf">user</span><span class="p">)</span>
+    <span class="n">status</span><span class="p">.</span><span class="nf">user_mentions</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">mention</span><span class="o">|</span>
+      <span class="n">m</span> <span class="o">=</span> <span class="no">Handle</span><span class="p">.</span><span class="nf">find_or_initialize_by</span><span class="p">(</span><span class="ss">screen_name: </span><span class="n">mention</span><span class="p">.</span><span class="nf">screen_name</span><span class="p">)</span>
+      <span class="n">m</span><span class="p">.</span><span class="nf">updated_at</span> <span class="o">||=</span> <span class="no">DateTime</span><span class="p">.</span><span class="nf">now</span>
+      <span class="n">m</span><span class="p">.</span><span class="nf">name</span> <span class="o">=</span> <span class="n">mention</span><span class="p">.</span><span class="nf">name</span>
+      <span class="n">m</span><span class="p">.</span><span class="nf">mentions_count</span> <span class="o">||=</span> <span class="mi">0</span>
+      <span class="n">m</span><span class="p">.</span><span class="nf">mentions_count</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="n">m</span><span class="p">.</span><span class="nf">save</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>And every minute, I re-index the last-updated accounts with a batch request
+using <a href="https://github.com/algolia/algoliasearch-rails">algoliasearch-rails</a>,</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">every</span> <span class="mi">1</span><span class="p">.</span><span class="nf">minute</span><span class="p">,</span> <span class="ss">roles: </span><span class="p">[</span><span class="ss">:cron</span><span class="p">]</span> <span class="k">do</span>
+  <span class="n">runner</span> <span class="s2">"Handle.where('updated_at &gt;= ?', 1.minute.ago).reindex!"</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>The result order is based on several criteria:</p>
+
+<ul>
+  <li>the number of typos,</li>
+  <li>the matching attributes: the name/handle is more important than the description,</li>
+  <li>the proximity between matched words,</li>
+  <li>and the followers count (I also use the “mentions count” if my crawler didn’t get the followers count yet).</li>
+</ul>
+
+<p>I could have improved the results by using the user’s list of
+followers/following but I was limited by your <a href="https://dev.twitter.com/docs/rate-limiting/1.1">Rate
+Limits</a>. <strong>Instead, I chose to
+emphasize your top-users </strong>(accounts having 10M+ followers).</p>
+
+<p>Here is the configuration I used</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Handle</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+
+  <span class="kp">include</span> <span class="no">AlgoliaSearch</span>
+  <span class="n">algoliasearch</span> <span class="ss">per_environment: </span><span class="kp">true</span><span class="p">,</span> <span class="ss">auto_index: </span><span class="kp">false</span><span class="p">,</span> <span class="ss">auto_remove: </span><span class="kp">false</span> <span class="k">do</span>
+    <span class="c1"># add an extra score attribute</span>
+    <span class="n">add_attribute</span> <span class="ss">:score</span>
+
+    <span class="c1"># add an extra full_name attribute: screen_name + name</span>
+    <span class="n">add_attribute</span> <span class="ss">:full_name</span>
+
+    <span class="c1"># do not take `full_name`'s words order into account, `full_name` is more important than `description`</span>
+    <span class="n">attributesToIndex</span> <span class="p">[</span><span class="s1">'unordered(full_name)'</span><span class="p">,</span> <span class="ss">:description</span><span class="p">]</span>
+
+    <span class="c1"># list of attributes to highlight</span>
+    <span class="n">attributesToHighlight</span> <span class="p">[</span><span class="ss">:screen_name</span><span class="p">,</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:description</span><span class="p">]</span>
+
+    <span class="c1"># use followers_count OR mentions_count to sort results (last sort criteria)</span>
+    <span class="n">customRanking</span> <span class="p">[</span><span class="s1">'desc(score)'</span><span class="p">]</span>
+
+    <span class="c1"># @I_love_you</span>
+    <span class="n">separatorsToIndex</span> <span class="s1">'_'</span>
+
+    <span class="c1"># tag top-users</span>
+    <span class="n">tags</span> <span class="k">do</span>
+      <span class="n">followers_count</span> <span class="o">&gt;</span> <span class="mi">10000000</span> <span class="p">?</span> <span class="p">[</span><span class="s1">'top'</span><span class="p">]</span> <span class="p">:</span> <span class="p">[]</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">full_name</span>
+    <span class="c1"># consider screen_name and name equal</span>
+    <span class="c1"># the name should not match exact so we concatenate it with the screen_name</span>
+    <span class="p">[</span><span class="n">screen_name</span><span class="p">,</span> <span class="s2">"</span><span class="si">#{</span><span class="n">screen_name</span><span class="si">}</span><span class="s2"> </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+  <span class="k">end</span>
+
+  <span class="c1"># the custom score</span>
+  <span class="k">def</span> <span class="nf">score</span>
+    <span class="k">return</span> <span class="n">followers_count</span> <span class="k">if</span> <span class="n">followers_count</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">mentions_count</span> <span class="o">&lt;</span> <span class="mi">10</span>
+      <span class="n">mentions_count</span>
+    <span class="k">elsif</span> <span class="n">mentions_count</span> <span class="o">&lt;</span> <span class="mi">100</span>
+      <span class="n">mentions_count</span> <span class="o">*</span> <span class="mi">10</span>
+    <span class="k">elsif</span> <span class="n">mentions_count</span> <span class="o">&lt;</span> <span class="mi">1000</span>
+      <span class="n">mentions_count</span> <span class="o">*</span> <span class="mi">100</span>
+    <span class="k">else</span>
+      <span class="n">mentions_count</span> <span class="o">*</span> <span class="mi">1000</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>The user query is composed by 2 backend queries:</p>
+
+<ul>
+  <li>the first one retrieves all matching top-users (could be replaced by a query targeting your followers/following only)</li>
+  <li>the second one the others.</li>
+</ul>
+
+<p><a href="http://twittersearch.algolia.io/"><strong>Try it for yourself</strong></a>, and enjoy
+relevant and highlighted results after the first keystroke: <a href="http://twittersearch.algolia.io/">Twitter Handles
+Search</a>.</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/01/06/improving-ranking-twitter-handles-search.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2013/07/18/our-search-as-a-service-offer-has-now-10-api-clients.html">&laquo; Our Search-as-a-Service offer has now 10 API Clients!</a>
+  
+  
+    <a class="next" href="/2014/01/18/search-grader-engine-performing.html">Search Grader by Algolia: How does your search engine perform? &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>Hello Twitter,</p>
+
+<p>I have been using your service for awhile, and I love it!</p>
+
+<p>At first, I was skeptical about what you could offer: Broadcasting to all my
+friends that I was eating a pizza, or taking a walk, is not really my cup of
+tea. But 3 years ago I figured out what Twitter was really meant for and how
+it could help me in a totally different way from what I first thought:</p>
+
+<ul>
+  <li>sharing interesting articles,</li>
+  <li>checking if /replace by the service provider you want/ is down,</li>
+  <li>or catching up on HackerNews.</li>
+</ul>
+
+<p>More recently, I discovered you had a feature that could help me even more: I
+can now ask for support by tweeting. Tweeting is often faster and more
+productive than sending an email. You taught me to include the recipient’s
+Handle in my tweets, and your current Handle auto-completion implementation
+works pretty well: but what if you could provide a <strong>better typo-tolerance and
+ranking</strong>? (I’m NOT speaking about your official OSX/iOS native clients and
+its <a href="http://blog.algolia.com/why-autocomplete-in-twitter-on-mobile-sucks/">totally unusable auto-completion feature</a>… btw, could you explain me why it
+is different from the one on your website?).</p>
+
+<p>I have been leading a search-engine development team over the last 5 years and
+I’m now VP of engineering at Algolia. I am aware that considering my job, I
+have kind of an “expert” point of view about search. But search has become so
+essential that I am convinced it <strong>must</strong> be irreproachable. Did you know
+that 1.7M+ people are currently following</p>
+
+<p>expecting great things from your search-engine, Twitter :) Here is how I would
+improve search for Twitter handles:</p>
+
+<p>For example, it would be nice if I could find President
+<a href="https://twitter.com/barackobama">@barackobama</a> with his last name:</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2013/12/Screen-Shot-2013-12-23-at-11.40.09.png"><img src="./assets/Screen-Shot-2013-12-23-at-11.40.09-263x300.png" alt="Search for Twitter handles including @obama yields less-than-stellar
+results." /></a></p>
+
+<p>Same for Justin:</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2013/12/Screen-Shot-2013-12-23-at-11.42.01.png"><img src="./assets/Screen-Shot-2013-12-23-at-11.42.01-262x300.png" alt="Search for Twitter handles that could be Justin Bieber's yields less-than-
+stellar results." /></a></p>
+
+<p>Typo-tolerance is now a must-have, especially because we’re all using
+smartphones and tablets:</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2013/12/Screen-Shot-2013-12-23-at-11.38.19.png"><img src="./assets/Screen-Shot-2013-12-23-at-11.38.19-263x300.png" alt="Search for Twitter handles should have typo tolerance." /></a></p>
+
+<p>More and more handles are now prefixed/suffixed by “official”, which makes
+finding <a href="https://twitter.com/officialadele">@OfficialAdele</a> just impossible:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2013/12/Screen-Shot-2013-12-23-at-11.47.52.png"><img src="./assets/Screen-Shot-2013-12-23-at-11.47.52.png" alt="Search for Twitter handles that start with @official is broken." /></a></p>
+
+<p><strong>For sure we can improve it, let’s code!</strong></p>
+
+<p>First of all Twitter, I need your Handles database :)</p>
+
+<ul>
+  <li>I used your <a href="https://dev.twitter.com/docs/streaming-apis">Streaming API</a> to crawl about 20M+ accounts in ~2 weeks: it’s not blazing fast but I must admit it does the job (and it’s free). That’s about 5 lines of Ruby with <a href="https://github.com/tweetstream/tweetstream">TweetStream</a>, good job guys!</li>
+  <li>and <a href="https://github.com/bmc/daemonize">Daemonize</a> to create a bin/crawler executable.</li>
+</ul>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">#! /usr/bin/env ruby</span>
+
+<span class="nb">require</span> <span class="no">File</span><span class="p">.</span><span class="nf">expand_path</span><span class="p">(</span><span class="no">File</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="no">File</span><span class="p">.</span><span class="nf">dirname</span><span class="p">(</span><span class="kp">__FILE__</span><span class="p">),</span> <span class="s1">'..'</span><span class="p">,</span> <span class="s1">'config'</span><span class="p">,</span> <span class="s1">'environment'</span><span class="p">))</span>
+
+<span class="n">daemon</span> <span class="o">=</span> <span class="no">TweetStream</span><span class="o">::</span><span class="no">Daemon</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s1">'crawler'</span><span class="p">,</span> <span class="ss">:log_output</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">)</span>
+<span class="n">daemon</span><span class="p">.</span><span class="nf">on_inited</span> <span class="k">do</span>
+  <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span><span class="p">.</span><span class="nf">connection</span><span class="p">.</span><span class="nf">reconnect!</span>
+  <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span><span class="p">.</span><span class="nf">logger</span> <span class="o">=</span> <span class="no">Logger</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="no">File</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="no">Rails</span><span class="p">.</span><span class="nf">root</span><span class="p">,</span> <span class="s1">'log/stream.log'</span><span class="p">),</span> <span class="s1">'w+'</span><span class="p">)</span>
+<span class="k">end</span>
+<span class="n">daemon</span><span class="p">.</span><span class="nf">on_error</span> <span class="k">do</span> <span class="o">|</span><span class="n">message</span><span class="o">|</span>
+  <span class="nb">puts</span> <span class="s2">"Error: </span><span class="si">#{</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">end</span>
+<span class="n">daemon</span><span class="p">.</span><span class="nf">sample</span> <span class="k">do</span> <span class="o">|</span><span class="n">status</span><span class="o">|</span>
+  <span class="no">Handle</span><span class="p">.</span><span class="nf">create_from_status</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>For each new tweet you send to me, I store the author (name + screen_name +
+description + followers_count) and all his/her user mentions.</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Handle</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">create_from_user</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="no">Handle</span><span class="p">.</span><span class="nf">find_or_initialize_by</span><span class="p">(</span><span class="ss">screen_name: </span><span class="n">user</span><span class="p">.</span><span class="nf">screen_name</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="n">h</span><span class="p">.</span><span class="nf">screen_name</span> <span class="k">if</span> <span class="n">h</span><span class="p">.</span><span class="nf">new_record?</span>
+    <span class="n">h</span><span class="p">.</span><span class="nf">name</span> <span class="o">=</span> <span class="n">user</span><span class="p">.</span><span class="nf">name</span>
+    <span class="n">h</span><span class="p">.</span><span class="nf">description</span> <span class="o">=</span> <span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="nf">description</span> <span class="o">||</span> <span class="s2">""</span><span class="p">)[</span><span class="mi">0</span><span class="o">..</span><span class="mi">255</span><span class="p">]</span>
+    <span class="n">h</span><span class="p">.</span><span class="nf">followers_count</span> <span class="o">=</span> <span class="n">user</span><span class="p">.</span><span class="nf">followers_count</span>
+    <span class="n">h</span><span class="p">.</span><span class="nf">updated_at</span> <span class="o">||=</span> <span class="no">DateTime</span><span class="p">.</span><span class="nf">now</span>
+    <span class="n">h</span><span class="p">.</span><span class="nf">save</span>
+    <span class="n">h</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">create_from_status</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+    <span class="no">Handle</span><span class="p">.</span><span class="nf">create_from_user</span><span class="p">(</span><span class="n">status</span><span class="p">.</span><span class="nf">user</span><span class="p">)</span>
+    <span class="n">status</span><span class="p">.</span><span class="nf">user_mentions</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">mention</span><span class="o">|</span>
+      <span class="n">m</span> <span class="o">=</span> <span class="no">Handle</span><span class="p">.</span><span class="nf">find_or_initialize_by</span><span class="p">(</span><span class="ss">screen_name: </span><span class="n">mention</span><span class="p">.</span><span class="nf">screen_name</span><span class="p">)</span>
+      <span class="n">m</span><span class="p">.</span><span class="nf">updated_at</span> <span class="o">||=</span> <span class="no">DateTime</span><span class="p">.</span><span class="nf">now</span>
+      <span class="n">m</span><span class="p">.</span><span class="nf">name</span> <span class="o">=</span> <span class="n">mention</span><span class="p">.</span><span class="nf">name</span>
+      <span class="n">m</span><span class="p">.</span><span class="nf">mentions_count</span> <span class="o">||=</span> <span class="mi">0</span>
+      <span class="n">m</span><span class="p">.</span><span class="nf">mentions_count</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="n">m</span><span class="p">.</span><span class="nf">save</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>And every minute, I re-index the last-updated accounts with a batch request
+using <a href="https://github.com/algolia/algoliasearch-rails">algoliasearch-rails</a>,</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">every</span> <span class="mi">1</span><span class="p">.</span><span class="nf">minute</span><span class="p">,</span> <span class="ss">roles: </span><span class="p">[</span><span class="ss">:cron</span><span class="p">]</span> <span class="k">do</span>
+  <span class="n">runner</span> <span class="s2">"Handle.where('updated_at &gt;= ?', 1.minute.ago).reindex!"</span>
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>The result order is based on several criteria:</p>
+
+<ul>
+  <li>the number of typos,</li>
+  <li>the matching attributes: the name/handle is more important than the description,</li>
+  <li>the proximity between matched words,</li>
+  <li>and the followers count (I also use the “mentions count” if my crawler didn’t get the followers count yet).</li>
+</ul>
+
+<p>I could have improved the results by using the user’s list of
+followers/following but I was limited by your <a href="https://dev.twitter.com/docs/rate-limiting/1.1">Rate
+Limits</a>. <strong>Instead, I chose to
+emphasize your top-users </strong>(accounts having 10M+ followers).</p>
+
+<p>Here is the configuration I used</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Handle</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
+
+  <span class="kp">include</span> <span class="no">AlgoliaSearch</span>
+  <span class="n">algoliasearch</span> <span class="ss">per_environment: </span><span class="kp">true</span><span class="p">,</span> <span class="ss">auto_index: </span><span class="kp">false</span><span class="p">,</span> <span class="ss">auto_remove: </span><span class="kp">false</span> <span class="k">do</span>
+    <span class="c1"># add an extra score attribute</span>
+    <span class="n">add_attribute</span> <span class="ss">:score</span>
+
+    <span class="c1"># add an extra full_name attribute: screen_name + name</span>
+    <span class="n">add_attribute</span> <span class="ss">:full_name</span>
+
+    <span class="c1"># do not take `full_name`'s words order into account, `full_name` is more important than `description`</span>
+    <span class="n">attributesToIndex</span> <span class="p">[</span><span class="s1">'unordered(full_name)'</span><span class="p">,</span> <span class="ss">:description</span><span class="p">]</span>
+
+    <span class="c1"># list of attributes to highlight</span>
+    <span class="n">attributesToHighlight</span> <span class="p">[</span><span class="ss">:screen_name</span><span class="p">,</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:description</span><span class="p">]</span>
+
+    <span class="c1"># use followers_count OR mentions_count to sort results (last sort criteria)</span>
+    <span class="n">customRanking</span> <span class="p">[</span><span class="s1">'desc(score)'</span><span class="p">]</span>
+
+    <span class="c1"># @I_love_you</span>
+    <span class="n">separatorsToIndex</span> <span class="s1">'_'</span>
+
+    <span class="c1"># tag top-users</span>
+    <span class="n">tags</span> <span class="k">do</span>
+      <span class="n">followers_count</span> <span class="o">&gt;</span> <span class="mi">10000000</span> <span class="p">?</span> <span class="p">[</span><span class="s1">'top'</span><span class="p">]</span> <span class="p">:</span> <span class="p">[]</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">full_name</span>
+    <span class="c1"># consider screen_name and name equal</span>
+    <span class="c1"># the name should not match exact so we concatenate it with the screen_name</span>
+    <span class="p">[</span><span class="n">screen_name</span><span class="p">,</span> <span class="s2">"</span><span class="si">#{</span><span class="n">screen_name</span><span class="si">}</span><span class="s2"> </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+  <span class="k">end</span>
+
+  <span class="c1"># the custom score</span>
+  <span class="k">def</span> <span class="nf">score</span>
+    <span class="k">return</span> <span class="n">followers_count</span> <span class="k">if</span> <span class="n">followers_count</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">mentions_count</span> <span class="o">&lt;</span> <span class="mi">10</span>
+      <span class="n">mentions_count</span>
+    <span class="k">elsif</span> <span class="n">mentions_count</span> <span class="o">&lt;</span> <span class="mi">100</span>
+      <span class="n">mentions_count</span> <span class="o">*</span> <span class="mi">10</span>
+    <span class="k">elsif</span> <span class="n">mentions_count</span> <span class="o">&lt;</span> <span class="mi">1000</span>
+      <span class="n">mentions_count</span> <span class="o">*</span> <span class="mi">100</span>
+    <span class="k">else</span>
+      <span class="n">mentions_count</span> <span class="o">*</span> <span class="mi">1000</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+</code></pre></div></div>
+
+<p>The user query is composed by 2 backend queries:</p>
+
+<ul>
+  <li>the first one retrieves all matching top-users (could be replaced by a query targeting your followers/following only)</li>
+  <li>the second one the others.</li>
+</ul>
+
+<p><a href="http://twittersearch.algolia.io/"><strong>Try it for yourself</strong></a>, and enjoy
+relevant and highlighted results after the first keystroke: <a href="http://twittersearch.algolia.io/">Twitter Handles
+Search</a>.</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">FanFootage: Solving the Search problem with Algolia</h1>
+</header>
+
+<span class="time">01 Dec 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p><strong>The following post is a guest post by Eoin O’Driscoll (web developer), and Vinny Glennon (co-founder) of FanFootage.com</strong></p>
+
+<p><img src="./assets/vinny.png" alt="vinny" /></p>
+
+<p><img src="./assets/eoin-o-driscoll.png" alt="eoin-o-driscoll" /></p>
+
+<p>When we founded FanFootage we knew there was something lacking in the concert
+and event experience. Fans were taking videos on their mobile phones during
+performances, loading them on YouTube, and the audio was horrible. So we
+created FanFootage where fans can upload their own video and we work with the
+bands to get the high def audio and put them together. Now fans can come to
+our site and see their favorite concerts or sports from any angle. They can
+also search for upcoming events and performances.</p>
+
+<p>For a recent Linkin Park concert the band and the fan group contacted us.
+Their fans uploaded more than 1,500 videos from almost every angle. On
+FanFootage that single concert has had over 350,000 page views.</p>
+
+<p><img src="./assets/fanfootage.gif" alt="fanfootage" /></p>
+
+<h2 id="our-user-experience-heavily-relies-on-search">Our user experience heavily relies on search</h2>
+
+<p>Earlier in our design <strong>we knew that search would be key to making FanFootage
+the ultimate fan experience</strong>. <strong>When a user comes to our site the first thing
+they do is search for the event or artist. And we need to make sure that they
+either find the artist they are looking for or something similar, and it has
+to be fast</strong>.</p>
+
+<p>As developers, our team isn’t new to search, particularly within the
+entertainment space. Our previous startup in the music space was bought by
+RealNetworks and a second startup was a competitor to Google. That is where we
+learned that search is hard. And when we thought to build our own search on
+FanFootage we quickly said it wasn’t going to happen.</p>
+
+<p>We also know what fans need. <strong>User demands have changed now that they can
+access anything from their phones. Today we expect our applications and
+services to predict what we are going to do next. And because of Google,
+people don’t search with a single phrase. Users expect search to understand
+how phrases fit together and are related and of course it needs to spell check
+and it must be instant</strong>.</p>
+
+<p>We also had different search requirements than other sites. Normally search on
+a site is for one unit or concept; a site for flowers for example. For us we
+needed to allow fans to search for artists, bands, friends or upcoming events
+in their area and never get a zero result.</p>
+
+<h2 id="why-we-chose-algolia">Why we chose Algolia</h2>
+
+<p>After looking at a few search applications we agreed on Algolia.<strong>Many search
+applications look nice but don’t have the flexibility we needed</strong> to configure
+them they way our business needed. And most weren’t fast.</p>
+
+<p>Why did we chose Algolia? First it has <strong>a developer-centric approach</strong>. It
+took us 2 hours to configure and a day to test and that was it. We basically
+had search up and running in a day. The dashboard lets me know that the API
+calls are returned within milliseconds and we have all the flexibility we need
+to configure as our content grows.</p>
+
+<p>Today, more than 250 artists have used FanFootage in 20 countries. We are
+growing quickly. As a company we are still learning what our fans are
+searching for and Algolia is helping us with that. <strong>As content grows we will
+continue to configure search to meet the needs of our fans</strong>. We will also be
+rolling out Algolia for mobile because of its multi-search capabilities.</p>
+
+<p>Algolia is a simple solution to a complex problem. And it blew our mind away.
+It just works. And now we can focus on our own fanbase.</p>
+
+<p><em>Images courtesy of FanFootage. Learn more on their
+<a href="https://fanfootage.com/">website</a></em></p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/12/01/fanfootage-solving-search-problem-algolia.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/11/28/black-thursday-dns-issue.html">&laquo; Black Thursday DNS issue</a>
+  
+  
+    <a class="next" href="/2014/12/01/search-strategic-engage-visitors.html">Search inside websites and mobile apps is strategic to engage visitors - Part 1 &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p><strong>The following post is a guest post by Eoin O’Driscoll (web developer), and Vinny Glennon (co-founder) of FanFootage.com</strong></p>
+
+<p><img src="./assets/vinny.png" alt="vinny" /></p>
+
+<p><img src="./assets/eoin-o-driscoll.png" alt="eoin-o-driscoll" /></p>
+
+<p>When we founded FanFootage we knew there was something lacking in the concert
+and event experience. Fans were taking videos on their mobile phones during
+performances, loading them on YouTube, and the audio was horrible. So we
+created FanFootage where fans can upload their own video and we work with the
+bands to get the high def audio and put them together. Now fans can come to
+our site and see their favorite concerts or sports from any angle. They can
+also search for upcoming events and performances.</p>
+
+<p>For a recent Linkin Park concert the band and the fan group contacted us.
+Their fans uploaded more than 1,500 videos from almost every angle. On
+FanFootage that single concert has had over 350,000 page views.</p>
+
+<p><img src="./assets/fanfootage.gif" alt="fanfootage" /></p>
+
+<h2 id="our-user-experience-heavily-relies-on-search">Our user experience heavily relies on search</h2>
+
+<p>Earlier in our design <strong>we knew that search would be key to making FanFootage
+the ultimate fan experience</strong>. <strong>When a user comes to our site the first thing
+they do is search for the event or artist. And we need to make sure that they
+either find the artist they are looking for or something similar, and it has
+to be fast</strong>.</p>
+
+<p>As developers, our team isn’t new to search, particularly within the
+entertainment space. Our previous startup in the music space was bought by
+RealNetworks and a second startup was a competitor to Google. That is where we
+learned that search is hard. And when we thought to build our own search on
+FanFootage we quickly said it wasn’t going to happen.</p>
+
+<p>We also know what fans need. <strong>User demands have changed now that they can
+access anything from their phones. Today we expect our applications and
+services to predict what we are going to do next. And because of Google,
+people don’t search with a single phrase. Users expect search to understand
+how phrases fit together and are related and of course it needs to spell check
+and it must be instant</strong>.</p>
+
+<p>We also had different search requirements than other sites. Normally search on
+a site is for one unit or concept; a site for flowers for example. For us we
+needed to allow fans to search for artists, bands, friends or upcoming events
+in their area and never get a zero result.</p>
+
+<h2 id="why-we-chose-algolia">Why we chose Algolia</h2>
+
+<p>After looking at a few search applications we agreed on Algolia.<strong>Many search
+applications look nice but don’t have the flexibility we needed</strong> to configure
+them they way our business needed. And most weren’t fast.</p>
+
+<p>Why did we chose Algolia? First it has <strong>a developer-centric approach</strong>. It
+took us 2 hours to configure and a day to test and that was it. We basically
+had search up and running in a day. The dashboard lets me know that the API
+calls are returned within milliseconds and we have all the flexibility we need
+to configure as our content grows.</p>
+
+<p>Today, more than 250 artists have used FanFootage in 20 countries. We are
+growing quickly. As a company we are still learning what our fans are
+searching for and Algolia is helping us with that. <strong>As content grows we will
+continue to configure search to meet the needs of our fans</strong>. We will also be
+rolling out Algolia for mobile because of its multi-search capabilities.</p>
+
+<p>Algolia is a simple solution to a complex problem. And it blew our mind away.
+It just works. And now we can focus on our own fanbase.</p>
+
+<p><em>Images courtesy of FanFootage. Learn more on their
+<a href="https://fanfootage.com/">website</a></em></p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

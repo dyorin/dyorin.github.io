@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">What Caused Today's Search Performance Issues In Europe and Why It Will Not Happen Again</h1>
+</header>
+
+<span class="time">17 Mar 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>During a few hours on March 17th you may have noticed longer response times
+for some of the queries sent by your users.</p>
+
+<p><img src="./assets/slowerthanaverage.png" alt="Slower than average search
+performance" /></p>
+
+<p><em>Average latency for one of our European clusters on March 17th</em></p>
+
+<p>As you can see above, our slowest average response time (measured from the
+user’s browser to our servers and back to the user’s browser) on one of our
+European clusters peaked at 858ms. On a normal day, this peak is usually no
+higher than 55ms.</p>
+
+<p>This was clearly not a normal behavior for our API, so we investigated.</p>
+
+<h2 id="how-indexing-and-search-calls-share-the-resource">How indexing and search calls share the resource</h2>
+
+<p>Each cluster handles two kinds of calls on our REST API: the ones to build and
+modify the indexes (Writes) and the ones to answer users’ queries (Search).
+The resources of each cluster are shared between these two uses. As Write
+operations are far more expensive than Search calls, we designed our API so
+that indexing should never use more than 10% of these resources.</p>
+
+<p>Up until now, we used to set a limitation on the rate of Writes <em>per HTTP
+connection</em>. There was no such limit for queries (Search); We simply limited
+Write calls to keep search quality. To avoid reaching the Write rate limit too
+quickly, we recommended users to Write by batching up to 1GB of operations per
+call, rather than sending them one by one. (A batch, for example, could be
+adding 1M products to an index on a single network call.) A loophole in this
+recommendation was the origin of yesterday’s issues.</p>
+
+<p>What happened yesterday is that on one of our European clusters, one customer
+pushed so many unbatched indexing calls from different HTTP connections that
+they massively outnumbered the search calls of the other users on the cluster.</p>
+
+<p>This eventually slowed down the average response time for the queries on this
+cluster, impacting our usual search performance.</p>
+
+<h2 id="the-solution">The Solution</h2>
+
+<p>As of today, we now set the rate limit of Writes <em>per account</em> and not per
+HTTP connection. It prevents anyone from using multiple connections to bypass
+this Write rate limit. This also implies that customers who want to push a lot
+of operations in a short time simply need to send their calls in batches.</p>
+
+<p>How would you batch your calls? The explanation is in our documentation. See
+here for an example with our Ruby client: <a href="https://github.com/algolia
+/algoliasearch-client-ruby#batch-writes">https://github.com/algolia
+/algoliasearch-client-ruby#batch-writes</a></p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/03/17/caused-todays-performance-issues-europe-will-happen.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/03/15/algolia-heroku-add-on-enters-ga.html">&laquo; Algolia Heroku add-on enters general availability</a>
+  
+  
+    <a class="next" href="/2014/03/18/handle-security-realtime-search.html">Realtime Search: Security and our Javascript Client &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>During a few hours on March 17th you may have noticed longer response times
+for some of the queries sent by your users.</p>
+
+<p><img src="./assets/slowerthanaverage.png" alt="Slower than average search
+performance" /></p>
+
+<p><em>Average latency for one of our European clusters on March 17th</em></p>
+
+<p>As you can see above, our slowest average response time (measured from the
+user’s browser to our servers and back to the user’s browser) on one of our
+European clusters peaked at 858ms. On a normal day, this peak is usually no
+higher than 55ms.</p>
+
+<p>This was clearly not a normal behavior for our API, so we investigated.</p>
+
+<h2 id="how-indexing-and-search-calls-share-the-resource">How indexing and search calls share the resource</h2>
+
+<p>Each cluster handles two kinds of calls on our REST API: the ones to build and
+modify the indexes (Writes) and the ones to answer users’ queries (Search).
+The resources of each cluster are shared between these two uses. As Write
+operations are far more expensive than Search calls, we designed our API so
+that indexing should never use more than 10% of these resources.</p>
+
+<p>Up until now, we used to set a limitation on the rate of Writes <em>per HTTP
+connection</em>. There was no such limit for queries (Search); We simply limited
+Write calls to keep search quality. To avoid reaching the Write rate limit too
+quickly, we recommended users to Write by batching up to 1GB of operations per
+call, rather than sending them one by one. (A batch, for example, could be
+adding 1M products to an index on a single network call.) A loophole in this
+recommendation was the origin of yesterday’s issues.</p>
+
+<p>What happened yesterday is that on one of our European clusters, one customer
+pushed so many unbatched indexing calls from different HTTP connections that
+they massively outnumbered the search calls of the other users on the cluster.</p>
+
+<p>This eventually slowed down the average response time for the queries on this
+cluster, impacting our usual search performance.</p>
+
+<h2 id="the-solution">The Solution</h2>
+
+<p>As of today, we now set the rate limit of Writes <em>per account</em> and not per
+HTTP connection. It prevents anyone from using multiple connections to bypass
+this Write rate limit. This also implies that customers who want to push a lot
+of operations in a short time simply need to send their calls in batches.</p>
+
+<p>How would you batch your calls? The explanation is in our documentation. See
+here for an example with our Ruby client: <a href="https://github.com/algolia
+/algoliasearch-client-ruby#batch-writes">https://github.com/algolia
+/algoliasearch-client-ruby#batch-writes</a></p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

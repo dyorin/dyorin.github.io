@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Why JSONP is still Mandatory</h1>
+</header>
+
+<span class="time">14 May 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>At Algolia, we are convinced that search queries need to be sent directly from
+the browser (or mobile app) to the search-engine in order to have a realtime
+search experience. This is why we have developed a search backend that replies
+within a few milliseconds through an API that <a href="http://blog.algolia.com/handle-security-realtime-search/">handles
+security</a> when
+called from the browser.</p>
+
+<h2 id="cross-domain-requests">Cross domain requests</h2>
+
+<p>For security reasons, the default behavior of a web browser is to block all
+queries that are going to a domain that is different from the website they are
+sent from. So when using an external HTTP-based search API, all your queries
+should be blocked because they are sent to an external domain. There are two
+methods to call an external API from the browser:</p>
+
+<h3 id="jsonp"> JSONP</h3>
+
+<p>The <a href="http://en.wikipedia.org/wiki/JSONP">JSONP</a> approach is a workaround that
+consists of calling an external API  with a DOM <code class="highlighter-rouge">&lt;script&gt;</code>  tag. The <code class="highlighter-rouge">&lt;script&gt;</code>
+tag is allowed to load content from any domains without security restrictions.
+The targeted API needs to expose a HTTP GET endpoint and return Javascript
+code instead of the regular JSON data. You can use this jQuery code to
+dynamically call a JSONP URL:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">$</span><span class="p">.</span><span class="nx">getJSON</span><span class="p">(</span> <span class="s2">"http://api.algolia.io/1/indexes/users?query=test"</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">data</span> <span class="p">)</span> <span class="p">{</span> <span class="p">....</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>In order to retrieve the API answer from the newly included JavaScript code,
+jQuery automatically appends a callback argument to your URL (for example
+&amp;callback=method12 ) which must be called by the JavaScript code that your API
+generates.</p>
+
+<p>This is what a regular JSON reply would look like:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"results"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Instead, the JSONP-compliant API generates:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">method12</span><span class="p">({</span><span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span> <span class="p">...]});</span>
+</code></pre></div></div>
+
+<h3 id="cross-origin-resource-sharing">Cross Origin Resource Sharing</h3>
+
+<p><a href="http://en.wikipedia.org/wiki/Cross-origin_resource_sharing">CORS</a> (Cross
+Origin Resource Sharing) is the proper approach to perform a call to an
+external domain. If the remote API is CORS-compliant, you can use a regular
+XMLHttpRequest  JavaScript object to perform the API call. In practice the
+browser will first perform an HTTP OPTIONS request to the remote API to check
+which caller domains are allowed and if it is authorized to execute the
+requested URL.</p>
+
+<p>For example here is a CORS request issued by a browser. The most important
+lines are the last two headers that specify which permissions are checked. In
+this case, the method is POST and the three specific HTTP headers that are
+requested.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>OPTIONS http://latency.algolia.io/1/indexes/*/queries
+&gt; Host: latency.algolia.io
+&gt; Origin: http://demos.algolia.com
+&gt; Accept-Encoding: gzip,deflate,sdch
+&gt; Accept-Language: en-US,en;q=0.8,fr;q=0.6
+&gt; User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2)
+&gt; Accept: */*
+&gt; Referer: http://demos.algolia.com/eventbrite/
+&gt; Connection: keep-alive
+&gt; Access-Control-Request-Headers: x-algolia-api-key, x-algolia-application-id, content-type
+&gt; Access-Control-Request-Method: POST
+</code></pre></div></div>
+
+<p>The server reply will be similar to this one:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt; HTTP/1.1 200 OK
+&lt; Server: nginx/1.6.0
+&lt; Date: Tue, 13 May 2014 08:33:55 GMT
+&lt; Content-Type: text/plain
+&lt; Content-Length: 0
+&lt; Connection: keep-alive
+&lt; Access-Control-Allow-Origin: *
+&lt; Access-Control-Allow-Methods: GET, PUT, DELETE, POST, OPTIONS
+&lt; Access-Control-Allow-Headers: x-algolia-api-key, x-algolia-application-id, content-type
+&lt; Access-Control-Allow-Credentials: false &lt; Expires: Wed, 14 May 2014 08:33:55 GMT
+&lt; Cache-Control: max-age=86400
+&lt; Access-Control-Max-Age: 86400
+</code></pre></div></div>
+
+<p>This answer indicates that this POST method can be called from any domain
+(Access-Control-Allow-Origin: * ) and with the requested headers.</p>
+
+<p>CORS has many advantages. First, it allows access to a real REST API with all
+HTTP verbs (mainly GET, POST, PUT, DELETE) and it also allows to better handle
+errors in an API (bad requests, object not found, …). The major drawback is
+that it is only supported by modern browsers (Internet Explorer ≥ 10, Firefox
+≥ 3.5, Chrome ≥ 3, Safari ≥ 4 &amp; Opera ≥ 12; Internet Explorer 8 &amp; 9 provides
+partial support via theXDomainRequest  object).</p>
+
+<h2 id="our-initial-conclusion">Our initial conclusion</h2>
+
+<p>Because of the advantages of CORS in terms of error handling, we started with
+a CORS implementation of our API. We also added a specific support for
+Internet Explorer 8 &amp; 9 using the  XDomainRequest  JavaScript object (they do
+not support XMLHttpRequest). The main difference is that XDomainRequest  does
+not support HTTP headers so we added another way to specify user credentials
+in the body of the POST request (it was initially only supported via HTTP
+headers).</p>
+
+<p>We were confident that we were supporting almost all browsers with this
+implementation, as only very old browsers could cause problems. But we were
+wrong!</p>
+
+<h2 id="cors-problems">CORS problems</h2>
+
+<p>The reality is that CORS still causes problems, even with modern browsers. The
+biggest problem we have found was with some firewalls/proxies that refuse HTTP
+OPTIONS queries. We even found software on some computers that were blocking
+CORS requests, as the <a href="http://www.bennadel.com/blog/2559-cisco-anyconnect-vpn-client-may-
+block-cors-ajax-options-requests.htm">Cisco AnyConnect VPN
+client</a>, which is widely used in the enterprise
+world. We have found this issue when a TechCrunch employee was not able to
+operate search on <a href="http://www.crunchbase.com">crunchbase.com</a> because the
+AnyConnect VPN client was installed on his laptop.</p>
+
+<p>Even in 2014 with a large majority of browsers supporting CORS, it is not
+possible to have perfect service quality with a CORS-enabled REST API!</p>
+
+<h2 id="the-solution">The solution</h2>
+
+<p>Using JSONP is the only solution to ensure great compatibility with old
+browsers and handle problems with a misconfigured firewall/proxy. However,
+CORS offers the advantage of proper error-handling, so we do not want to limit
+ourselves to JSONP.</p>
+
+<p>In the latest version of our JavaScript client, we decided to use CORS with a
+fallback on JSONP. At client initialization time, we check if the browser
+supports CORS and then perform an OPTIONS query to check that there is no
+firewall/proxy that blocks CORS requests. If there is any error we fallback on
+JSONP. All this logic is available in our JavaScript client without any
+API/code change for our customers.</p>
+
+<p>Having CORS support with automatic fallback on JSONP is the best way we have
+found to ensure great service quality and to support all corner case
+scenarios. If you see any other way to do it, your feedback is very welcome.</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/05/14/jsonp-still-mandatory.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/05/02/inside-growthhackers-implementation-of-algolia.html">&laquo; Inside GrowthHackers.com's Implementation of Algolia</a>
+  
+  
+    <a class="next" href="/2014/05/22/synonym-search-engine.html">A New Way to Handle Synonyms in a Search Engine &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>At Algolia, we are convinced that search queries need to be sent directly from
+the browser (or mobile app) to the search-engine in order to have a realtime
+search experience. This is why we have developed a search backend that replies
+within a few milliseconds through an API that <a href="http://blog.algolia.com/handle-security-realtime-search/">handles
+security</a> when
+called from the browser.</p>
+
+<h2 id="cross-domain-requests">Cross domain requests</h2>
+
+<p>For security reasons, the default behavior of a web browser is to block all
+queries that are going to a domain that is different from the website they are
+sent from. So when using an external HTTP-based search API, all your queries
+should be blocked because they are sent to an external domain. There are two
+methods to call an external API from the browser:</p>
+
+<h3 id="jsonp"> JSONP</h3>
+
+<p>The <a href="http://en.wikipedia.org/wiki/JSONP">JSONP</a> approach is a workaround that
+consists of calling an external API  with a DOM <code class="highlighter-rouge">&lt;script&gt;</code>  tag. The <code class="highlighter-rouge">&lt;script&gt;</code>
+tag is allowed to load content from any domains without security restrictions.
+The targeted API needs to expose a HTTP GET endpoint and return Javascript
+code instead of the regular JSON data. You can use this jQuery code to
+dynamically call a JSONP URL:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">$</span><span class="p">.</span><span class="nx">getJSON</span><span class="p">(</span> <span class="s2">"http://api.algolia.io/1/indexes/users?query=test"</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span> <span class="nx">data</span> <span class="p">)</span> <span class="p">{</span> <span class="p">....</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>In order to retrieve the API answer from the newly included JavaScript code,
+jQuery automatically appends a callback argument to your URL (for example
+&amp;callback=method12 ) which must be called by the JavaScript code that your API
+generates.</p>
+
+<p>This is what a regular JSON reply would look like:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"results"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Instead, the JSONP-compliant API generates:</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">method12</span><span class="p">({</span><span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span> <span class="p">...]});</span>
+</code></pre></div></div>
+
+<h3 id="cross-origin-resource-sharing">Cross Origin Resource Sharing</h3>
+
+<p><a href="http://en.wikipedia.org/wiki/Cross-origin_resource_sharing">CORS</a> (Cross
+Origin Resource Sharing) is the proper approach to perform a call to an
+external domain. If the remote API is CORS-compliant, you can use a regular
+XMLHttpRequest  JavaScript object to perform the API call. In practice the
+browser will first perform an HTTP OPTIONS request to the remote API to check
+which caller domains are allowed and if it is authorized to execute the
+requested URL.</p>
+
+<p>For example here is a CORS request issued by a browser. The most important
+lines are the last two headers that specify which permissions are checked. In
+this case, the method is POST and the three specific HTTP headers that are
+requested.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>OPTIONS http://latency.algolia.io/1/indexes/*/queries
+&gt; Host: latency.algolia.io
+&gt; Origin: http://demos.algolia.com
+&gt; Accept-Encoding: gzip,deflate,sdch
+&gt; Accept-Language: en-US,en;q=0.8,fr;q=0.6
+&gt; User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2)
+&gt; Accept: */*
+&gt; Referer: http://demos.algolia.com/eventbrite/
+&gt; Connection: keep-alive
+&gt; Access-Control-Request-Headers: x-algolia-api-key, x-algolia-application-id, content-type
+&gt; Access-Control-Request-Method: POST
+</code></pre></div></div>
+
+<p>The server reply will be similar to this one:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt; HTTP/1.1 200 OK
+&lt; Server: nginx/1.6.0
+&lt; Date: Tue, 13 May 2014 08:33:55 GMT
+&lt; Content-Type: text/plain
+&lt; Content-Length: 0
+&lt; Connection: keep-alive
+&lt; Access-Control-Allow-Origin: *
+&lt; Access-Control-Allow-Methods: GET, PUT, DELETE, POST, OPTIONS
+&lt; Access-Control-Allow-Headers: x-algolia-api-key, x-algolia-application-id, content-type
+&lt; Access-Control-Allow-Credentials: false &lt; Expires: Wed, 14 May 2014 08:33:55 GMT
+&lt; Cache-Control: max-age=86400
+&lt; Access-Control-Max-Age: 86400
+</code></pre></div></div>
+
+<p>This answer indicates that this POST method can be called from any domain
+(Access-Control-Allow-Origin: * ) and with the requested headers.</p>
+
+<p>CORS has many advantages. First, it allows access to a real REST API with all
+HTTP verbs (mainly GET, POST, PUT, DELETE) and it also allows to better handle
+errors in an API (bad requests, object not found, …). The major drawback is
+that it is only supported by modern browsers (Internet Explorer ≥ 10, Firefox
+≥ 3.5, Chrome ≥ 3, Safari ≥ 4 &amp; Opera ≥ 12; Internet Explorer 8 &amp; 9 provides
+partial support via theXDomainRequest  object).</p>
+
+<h2 id="our-initial-conclusion">Our initial conclusion</h2>
+
+<p>Because of the advantages of CORS in terms of error handling, we started with
+a CORS implementation of our API. We also added a specific support for
+Internet Explorer 8 &amp; 9 using the  XDomainRequest  JavaScript object (they do
+not support XMLHttpRequest). The main difference is that XDomainRequest  does
+not support HTTP headers so we added another way to specify user credentials
+in the body of the POST request (it was initially only supported via HTTP
+headers).</p>
+
+<p>We were confident that we were supporting almost all browsers with this
+implementation, as only very old browsers could cause problems. But we were
+wrong!</p>
+
+<h2 id="cors-problems">CORS problems</h2>
+
+<p>The reality is that CORS still causes problems, even with modern browsers. The
+biggest problem we have found was with some firewalls/proxies that refuse HTTP
+OPTIONS queries. We even found software on some computers that were blocking
+CORS requests, as the <a href="http://www.bennadel.com/blog/2559-cisco-anyconnect-vpn-client-may-
+block-cors-ajax-options-requests.htm">Cisco AnyConnect VPN
+client</a>, which is widely used in the enterprise
+world. We have found this issue when a TechCrunch employee was not able to
+operate search on <a href="http://www.crunchbase.com">crunchbase.com</a> because the
+AnyConnect VPN client was installed on his laptop.</p>
+
+<p>Even in 2014 with a large majority of browsers supporting CORS, it is not
+possible to have perfect service quality with a CORS-enabled REST API!</p>
+
+<h2 id="the-solution">The solution</h2>
+
+<p>Using JSONP is the only solution to ensure great compatibility with old
+browsers and handle problems with a misconfigured firewall/proxy. However,
+CORS offers the advantage of proper error-handling, so we do not want to limit
+ourselves to JSONP.</p>
+
+<p>In the latest version of our JavaScript client, we decided to use CORS with a
+fallback on JSONP. At client initialization time, we check if the browser
+supports CORS and then perform an OPTIONS query to check that there is no
+firewall/proxy that blocks CORS requests. If there is any error we fallback on
+JSONP. All this logic is available in our JavaScript client without any
+API/code change for our customers.</p>
+
+<p>Having CORS support with automatic fallback on JSONP is the best way we have
+found to ensure great service quality and to support all corner case
+scenarios. If you see any other way to do it, your feedback is very welcome.</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

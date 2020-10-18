@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Great discussions at LeWeb'12 London</h1>
+</header>
+
+<span class="time">03 Jul 2012</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>On June 19 &amp; 20th, I had the chance to participate to <a href="http://london.leweb.co/">LeWeb 2012
+London</a> edition. This year theme was “Faster than
+Real Time” and we had an impressive list of speakers! But the true value of
+LeWeb is elsewhere: It’s in the 1283 people from 52 countries who were present
+and with whom you could network!</p>
+
+<p>They chose <a href="http://match.presdo.com/">Presdo Match</a> to help people meet and
+honestly… this tool would benefit from some improvements, especially a
+mobile version! Still, I was able to find no fewer than 100 participants
+having the “mobile” keyword in their profile and, from there, organize a
+handful of meetings. Thanks to all of you who accepted to meet me or whom I
+met unplanned, with a special thanks to <a href="http://hello24.com/">Paul Ardeleanu</a>,
+<a href="http://www.linkedin.com/in/goras">Gora Sudindranath</a>, <a href="http://twitter.com/lindseycholmes">Lindsey C.
+Holmes</a>, <a href="https://twitter.com/#!/portart">Marius
+Rostad</a>, <a href="https://twitter.com/#!/kevinmcdonagh">Kevin
+McDonagh</a> and <a href="http://www.alexdelivet.com/">Alexandre
+Delivet</a> for their precious feedbacks about
+Algolia.</p>
+
+<p>[caption id=”attachment_82” align=”alignright” width=”180”]<a href="https://blog.algolia.com/wp-
+content/uploads/2012/07/citiessuggest-leweb.png"><img src="./assets/citiessuggest-leweb-180x300.png" alt="Cities Suggest
+Demo" /></a> Cities Suggest demo @
+LeWeb[/caption]</p>
+
+<p>I had the opportunity to do the very first demonstrations of our instant
+suggest lib, and that was both exhilarating and frustrating! We chose to
+develop a small proof of concept suggesting city names from anywhere in the
+world. Here’s what I learned:</p>
+
+<ul>
+  <li>A demo is better than many words! Even if most people knew what I meant by “google instant suggest”, the demo was key in clarifying our offering.</li>
+  <li>Even if we chose cities because it was easy to demonstrate (thanks to the geonames database), it can be interesting in itself!</li>
+  <li>100ms seemed a pretty fast response time in our initial testing, but it’s actually way too slow to have a smooth user experience.</li>
+</ul>
+
+<p>Over all that was a very good experience, and I came back with a few
+improvements to implement (most coming from my own frustration showing the
+demo while the feedback was actually very positive!)</p>
+
+<p>The most important piece of feedback was about the perceived sluggishness of
+the app. We decided to implement an asynchronous version of the lib. Beware,
+it actually comes with a drawback for our users; It’s significantly more
+difficult to integrate. But it did not take long for us to decide it was the
+way to go, since the perception of speed is so natural that the benefit far
+outweighs the longer integration code. We’ll now work on simplifying it!</p>
+
+<p>We’ll soon do a post about this demo. In the meantime, stay tuned!</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2012/07/03/great-discussions-at-leweb12-london.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+  
+    <a class="next" href="/2012/07/05/why-develop-our-own-unicode-library.html">Why develop our own Unicode Library? - The Algolia Blog &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>On June 19 &amp; 20th, I had the chance to participate to <a href="http://london.leweb.co/">LeWeb 2012
+London</a> edition. This year theme was “Faster than
+Real Time” and we had an impressive list of speakers! But the true value of
+LeWeb is elsewhere: It’s in the 1283 people from 52 countries who were present
+and with whom you could network!</p>
+
+<p>They chose <a href="http://match.presdo.com/">Presdo Match</a> to help people meet and
+honestly… this tool would benefit from some improvements, especially a
+mobile version! Still, I was able to find no fewer than 100 participants
+having the “mobile” keyword in their profile and, from there, organize a
+handful of meetings. Thanks to all of you who accepted to meet me or whom I
+met unplanned, with a special thanks to <a href="http://hello24.com/">Paul Ardeleanu</a>,
+<a href="http://www.linkedin.com/in/goras">Gora Sudindranath</a>, <a href="http://twitter.com/lindseycholmes">Lindsey C.
+Holmes</a>, <a href="https://twitter.com/#!/portart">Marius
+Rostad</a>, <a href="https://twitter.com/#!/kevinmcdonagh">Kevin
+McDonagh</a> and <a href="http://www.alexdelivet.com/">Alexandre
+Delivet</a> for their precious feedbacks about
+Algolia.</p>
+
+<p>[caption id=”attachment_82” align=”alignright” width=”180”]<a href="https://blog.algolia.com/wp-
+content/uploads/2012/07/citiessuggest-leweb.png"><img src="./assets/citiessuggest-leweb-180x300.png" alt="Cities Suggest
+Demo" /></a> Cities Suggest demo @
+LeWeb[/caption]</p>
+
+<p>I had the opportunity to do the very first demonstrations of our instant
+suggest lib, and that was both exhilarating and frustrating! We chose to
+develop a small proof of concept suggesting city names from anywhere in the
+world. Here’s what I learned:</p>
+
+<ul>
+  <li>A demo is better than many words! Even if most people knew what I meant by “google instant suggest”, the demo was key in clarifying our offering.</li>
+  <li>Even if we chose cities because it was easy to demonstrate (thanks to the geonames database), it can be interesting in itself!</li>
+  <li>100ms seemed a pretty fast response time in our initial testing, but it’s actually way too slow to have a smooth user experience.</li>
+</ul>
+
+<p>Over all that was a very good experience, and I came back with a few
+improvements to implement (most coming from my own frustration showing the
+demo while the feedback was actually very positive!)</p>
+
+<p>The most important piece of feedback was about the perceived sluggishness of
+the app. We decided to implement an asynchronous version of the lib. Beware,
+it actually comes with a drawback for our users; It’s significantly more
+difficult to integrate. But it did not take long for us to decide it was the
+way to go, since the perception of speed is so natural that the benefit far
+outweighs the longer integration code. We’ll now work on simplifying it!</p>
+
+<p>We’ll soon do a post about this demo. In the meantime, stay tuned!</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

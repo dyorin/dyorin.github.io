@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Inside GrowthHackers.com's Implementation of Algolia</h1>
+</header>
+
+<span class="time">02 May 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>We interviewed <a href="https://twitter.com/dylanLaCom">Dylan La Com</a>, Growth Product
+Manager at <a href="https://qualaroo.com">Qualaroo</a> &amp;
+<a href="http://growthhackers.com">GrowthHackers.com</a>, about their Algolia
+implementation experience.</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2014/05/growthacker.jpg"><img src="./assets/growthacker.jpg" alt="growthacker" /></a></p>
+
+<h3 id="what-role-did-search-play-at-growthhackers-before-the-algolia">What role did search play at GrowthHackers before the Algolia</h3>
+<p>implementation?</p>
+
+<p>When we launched our community site
+<a href="http://growthhackers.com/">GrowthHackers.com</a> in October 2013, search was
+admittedly an afterthought for us. GrowthHackers is a social-voting site where
+marketers, founders, and product-people can share and discuss growth-related
+content. At launch, it was unclear what role search would have on the site.
+GrowthHackers is built on Wordpress, and with that comes Wordpress’ standard
+search functionality. What WP search does is append an additional keyword or
+phrase parameter to its typical post query and load a new page with the
+results. WP search only indexed the outbound URLs of the articles our members
+submitted, and this made finding specific content difficult.</p>
+
+<h3 id="why-did-you-want-to-give-search-an-update-on-growthhackers">Why did you want to give search an update on GrowthHackers?</h3>
+
+<p>We started hearing about our lack of a solid search feature from some of our
+more active users. One of our members even put together a slide presentation
+to prove just how useless our search was [<a href="http://www.slideshare.net/andrewmatthewthompson/improving-search-on-growthhackers">check it out
+here</a>]. At the same time, GrowthHackers was becoming more than just a
+way to stay up-to-date on the best growth articles, it was becoming the place
+to get answers: an encyclopedia for growth-related information. Search volume
+at this time was peaking in the mid-hundreds per week. We needed a search
+feature that could support this evolving use-case.</p>
+
+<h3 id="why-did-you-choose-algolia">Why did you choose Algolia?</h3>
+
+<p>We looked at several search solutions before trying Algolia, including
+Swiftype, WP Search (plugin), and Srch2. All are great solutions, but
+ultimately, we went with Algolia because they had the right mix of features:
+Their integration was simple, the documentation was thorough, and there were
+plenty of starter templates. I knew it was a good sign when, while looking
+their GitHub repository, I found they had a demo site built with search that
+worked very similar to how we hoped ours would work, complete with real-time
+results, typo-tolerance, and filters. The Algolia team was incredibly helpful
+getting us set up and was there each step of the way through the integration
+process, providing resources and best practices for creating a truly top-notch
+search experience.</p>
+
+<h3 id="tell-me-a-little-about-how-the-new-search-works">Tell me a little about how the new search works.</h3>
+
+<p>Our primary use of Algolia is to store and index user submitted content, and
+provide real-time search in our growing database of growth-related articles,
+questions, videos and slides. The majority of what we index is article titles
+and URLs–strings which are generally small. Visitors to our site often come
+with specific growth-related questions and use our search to find answers
+quickly. For example, someone interested in learning best practices for
+running Twitter ads could type in “Twitter ad” and within milliseconds see
+dozens of articles and discussions related to maximizing ROI for Twitter ads.
+Using Algolia’s admin dashboard, we’re able to set ranking priorities based on
+the number of votes and comments of each article, and make sure the top
+results are the most relevant. So, the visitor who searches “Twitter ad” is
+shown articles with the highest mix of votes and comments. Algolia took the
+search ranking process and wrapped it in a clean and simple interface that
+allows anyone, regardless of their experience with search, to easily adjust
+and manipulate.</p>
+
+<p>One of the challenges we faced during the integration process was
+understanding how to keep our main database synced and up to date with our
+Algolia index. User submitted content on GrowthHackers changes often as users
+interact with the content. Each post once submitted may receive upvotes and
+comments from members in the community. Each post also has a wiki-style
+summary field that can be edited by community members. Lastly, posts can have
+several states, including published, pending and trashed. In order to ensure
+our content on Algolia mirrored the content in our database, we set up a job
+queue and a cron process to periodically push updates to our Algolia index.
+This has been working quite well for us.</p>
+
+<h3 id="how-has-the-new-search-impacted-engagement">How has the new search impacted engagement?</h3>
+
+<p>We released the new search mid-February, and since the release we’ve seen
+search volume increase 4-5X. Of course there are several factors at play here,
+including increased traffic volume and better search bar placement, but it is
+clear that Algolia’s search features have contributed to an impressive
+increase in search engagement. On average, visitors who utilize search view
+2-3X more pages per session and spend 5-6X longer on the site than those who
+don’t search. Algolia’s analytics dashboard provides us with an incredible
+glimpse of visitor intent on our site by showing us the queries visitors are
+searching for, and trend lines to show popularity over time. With this data,
+we’re able to better understand how our visitors want to use our site, and
+make better decisions about how to organize the content.</p>
+
+<p>Moving forward, we’re hoping to implement Algolia’s search filters to provide
+even better ways to access content on our site. We’re excited to have such a
+powerful tool in our stack and hope to experiment with new ways to provide
+search functionality throughout GrowthHackers.</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/05/02/inside-growthhackers-implementation-of-algolia.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/04/09/dealing-openssl-security-issue.html">&laquo; Dealing with OpenSSL Heartbleed Vulnerability</a>
+  
+  
+    <a class="next" href="/2014/05/14/jsonp-still-mandatory.html">Why JSONP is still Mandatory &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>We interviewed <a href="https://twitter.com/dylanLaCom">Dylan La Com</a>, Growth Product
+Manager at <a href="https://qualaroo.com">Qualaroo</a> &amp;
+<a href="http://growthhackers.com">GrowthHackers.com</a>, about their Algolia
+implementation experience.</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2014/05/growthacker.jpg"><img src="./assets/growthacker.jpg" alt="growthacker" /></a></p>
+
+<h3 id="what-role-did-search-play-at-growthhackers-before-the-algolia">What role did search play at GrowthHackers before the Algolia</h3>
+<p>implementation?</p>
+
+<p>When we launched our community site
+<a href="http://growthhackers.com/">GrowthHackers.com</a> in October 2013, search was
+admittedly an afterthought for us. GrowthHackers is a social-voting site where
+marketers, founders, and product-people can share and discuss growth-related
+content. At launch, it was unclear what role search would have on the site.
+GrowthHackers is built on Wordpress, and with that comes Wordpress’ standard
+search functionality. What WP search does is append an additional keyword or
+phrase parameter to its typical post query and load a new page with the
+results. WP search only indexed the outbound URLs of the articles our members
+submitted, and this made finding specific content difficult.</p>
+
+<h3 id="why-did-you-want-to-give-search-an-update-on-growthhackers">Why did you want to give search an update on GrowthHackers?</h3>
+
+<p>We started hearing about our lack of a solid search feature from some of our
+more active users. One of our members even put together a slide presentation
+to prove just how useless our search was [<a href="http://www.slideshare.net/andrewmatthewthompson/improving-search-on-growthhackers">check it out
+here</a>]. At the same time, GrowthHackers was becoming more than just a
+way to stay up-to-date on the best growth articles, it was becoming the place
+to get answers: an encyclopedia for growth-related information. Search volume
+at this time was peaking in the mid-hundreds per week. We needed a search
+feature that could support this evolving use-case.</p>
+
+<h3 id="why-did-you-choose-algolia">Why did you choose Algolia?</h3>
+
+<p>We looked at several search solutions before trying Algolia, including
+Swiftype, WP Search (plugin), and Srch2. All are great solutions, but
+ultimately, we went with Algolia because they had the right mix of features:
+Their integration was simple, the documentation was thorough, and there were
+plenty of starter templates. I knew it was a good sign when, while looking
+their GitHub repository, I found they had a demo site built with search that
+worked very similar to how we hoped ours would work, complete with real-time
+results, typo-tolerance, and filters. The Algolia team was incredibly helpful
+getting us set up and was there each step of the way through the integration
+process, providing resources and best practices for creating a truly top-notch
+search experience.</p>
+
+<h3 id="tell-me-a-little-about-how-the-new-search-works">Tell me a little about how the new search works.</h3>
+
+<p>Our primary use of Algolia is to store and index user submitted content, and
+provide real-time search in our growing database of growth-related articles,
+questions, videos and slides. The majority of what we index is article titles
+and URLs–strings which are generally small. Visitors to our site often come
+with specific growth-related questions and use our search to find answers
+quickly. For example, someone interested in learning best practices for
+running Twitter ads could type in “Twitter ad” and within milliseconds see
+dozens of articles and discussions related to maximizing ROI for Twitter ads.
+Using Algolia’s admin dashboard, we’re able to set ranking priorities based on
+the number of votes and comments of each article, and make sure the top
+results are the most relevant. So, the visitor who searches “Twitter ad” is
+shown articles with the highest mix of votes and comments. Algolia took the
+search ranking process and wrapped it in a clean and simple interface that
+allows anyone, regardless of their experience with search, to easily adjust
+and manipulate.</p>
+
+<p>One of the challenges we faced during the integration process was
+understanding how to keep our main database synced and up to date with our
+Algolia index. User submitted content on GrowthHackers changes often as users
+interact with the content. Each post once submitted may receive upvotes and
+comments from members in the community. Each post also has a wiki-style
+summary field that can be edited by community members. Lastly, posts can have
+several states, including published, pending and trashed. In order to ensure
+our content on Algolia mirrored the content in our database, we set up a job
+queue and a cron process to periodically push updates to our Algolia index.
+This has been working quite well for us.</p>
+
+<h3 id="how-has-the-new-search-impacted-engagement">How has the new search impacted engagement?</h3>
+
+<p>We released the new search mid-February, and since the release we’ve seen
+search volume increase 4-5X. Of course there are several factors at play here,
+including increased traffic volume and better search bar placement, but it is
+clear that Algolia’s search features have contributed to an impressive
+increase in search engagement. On average, visitors who utilize search view
+2-3X more pages per session and spend 5-6X longer on the site than those who
+don’t search. Algolia’s analytics dashboard provides us with an incredible
+glimpse of visitor intent on our site by showing us the queries visitors are
+searching for, and trend lines to show popularity over time. With this data,
+we’re able to better understand how our visitors want to use our site, and
+make better decisions about how to organize the content.</p>
+
+<p>Moving forward, we’re hoping to implement Algolia’s search filters to provide
+even better ways to access content on our site. We’re excited to have such a
+powerful tool in our stack and hope to experiment with new ways to provide
+search functionality throughout GrowthHackers.</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Modern JavaScript libraries: the isomorphic way</h1>
+</header>
+
+<span class="time">06 May 2015</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>Algolia’s DNA is really about performance. We want our search engine to answer
+relevant results as fast as possible.</p>
+
+<p>To achieve the best end-to-end performance we’ve decided to go with JavaScript
+since the total beginning of Algolia. Our end-users search using our REST API
+directly from their browser - with JavaScript - without going through the
+websites’ backends.</p>
+
+<p>Our JavaScript &amp; Node.js API clients were implemented 2 years ago and were now
+lacking of all modern best practices:</p>
+
+<ul>
+  <li>not following the <a href="http://fredkschott.com/post/2014/03/understanding-error-first-callbacks-in-node-js/">error-first</a> or <a href="http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony">callback-last</a> conventions;</li>
+  <li>inconsistent API between the Node.js and the browser implementations;</li>
+  <li>no <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a> support;</li>
+  <li>Node.js module named <a href="https://www.npmjs.com/package/algolia-search">algolia-search</a>, browser module named <a href="https://www.npmjs.com/package/algoliasearch">algoliasearch</a>;</li>
+  <li>cannot use the same module in Node.js or the browser (obviously);</li>
+  <li>browser module could not be used with <a href="http://browserify.org/">browserify</a> or <a href="http://webpack.github.io/">webpack</a>. It was exporting multiple properties directly in the window object.</li>
+</ul>
+
+<p>This blog post is a summary of the three main challenges we faced while
+modernizing our JavaScript client.</p>
+
+<h2 id="tldr">tl;dr;</h2>
+
+<p>Now the good news: we have a new isomorphic <a href="http://github.com/algolia/algoliasearch-client-js">JavaScript API
+client</a>.</p>
+
+<blockquote>
+  <p>Isomorphic JavaScript apps are JavaScript applications that can run both
+client-side and server-side.</p>
+</blockquote>
+
+<p>The backend and frontend share the same code.</p>
+
+<blockquote>
+
+</blockquote>
+
+<blockquote>
+  <p><a href="http://isomorphic.net/">isomorphic.net</a></p>
+</blockquote>
+
+<p>Here are the main features of this new API client:</p>
+
+<ul>
+  <li>works in <a href="https://nodejs.org/">Node.js</a> 0.10, 0.12, <a href="https://iojs.org/en/index.html">iojs</a> and from Internet Explorer 8 up to modern browsers;</li>
+  <li>has a <a href="https://github.com/algolia/algoliasearch-client-js#callback-convention">Promise + callback</a> API;</li>
+  <li>is available at <a href="https://www.npmjs.com/package/algoliasearch">npmjs.com/algoliasearch</a> and on <a href="http://cdn.jsdelivr.net/algoliasearch/3/algoliasearch.min.js">cdn.jsdelivr.net</a>;</li>
+  <li>has <a href="https://github.com/algolia/algoliasearch-client-js/tree/master/dist">builds</a> for jQuery, AngularJS and Parse.com;</li>
+  <li>is compatible with all module loaders like <a href="http://browserify.org/">browserify</a> or <a href="http://webpack.github.io/">webpack</a>;</li>
+  <li>is fully <a href="https://github.com/algolia/algoliasearch-client-js/tree/master/test">tested</a> in all supported environments.</li>
+</ul>
+
+<p>If you were using our previous libraries, we have migration guides for both
+<a href="https://github.com/algolia/algoliasearch-client-
+js/wiki/Node.js-v1.x.x-migration-guide">Node.js</a> and <a href="https://github.com/algolia/algoliasearch-client-js/wiki/Migration-
+guide-from-2.x.x-to-3.x.x">the
+browser</a>.</p>
+
+<p>#</p>
+
+<h1 id="challenge-1-testing">Challenge #1: testing</h1>
+
+<p>Before being able to merge the Node.js and browser module, we had to remember
+how the current code is working. An easy way to understand what a code is
+doing is to read the tests. Unfortunately, in the previous version of the
+library, we had <a href="https://github.com/algolia/algoliasearch-
+client-js/tree/ba71a68005945c73f7157a8222a9c758e332eceb/test">only one test</a>. One test was
+not enough to rewrite our library. Let’s go testing!</p>
+
+<h2 id="unit-integration">Unit? Integration?</h2>
+
+<p>When no tests are written on a library of <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/ba71a68005945c73f7157a8222a9c758e332eceb/src/algoliasearch.js#L1484">~1500+
+LOC</a>,
+what are the tests you should write first?</p>
+
+<p>Unit testing would be too close to the implementation. As we are going to
+rewrite a lot of code later on, we better not go too far on this road right
+now.</p>
+
+<p>Here’s the flow of our JavaScript library when doing a search:</p>
+
+<ul>
+  <li>initialize the library with <code class="highlighter-rouge">algoliasearch()</code></li>
+  <li>call <code class="highlighter-rouge">index.search('something', callback)</code></li>
+  <li>browser issue an HTTP request</li>
+  <li><code class="highlighter-rouge">callback(err, content)</code></li>
+</ul>
+
+<p>From a testing point of view, this can be summarized as:</p>
+
+<ul>
+  <li>input: method call</li>
+  <li>output: HTTP request</li>
+</ul>
+
+<p>Integration testing for a JavaScript library doing HTTP calls is interesting
+but does not scale well.</p>
+
+<p>Indeed, having to reach Algolia servers in each test would introduce a shared
+testing state amongst developers and continuous integration. It would also
+have a slow TDD feedback because of heavy network usage.</p>
+
+<p>Our strategy for testing our JavaScript API client was to mock (do not run
+away right now) the <a href="https://xhr.spec.whatwg.org/">XMLHttpRequest</a> object.
+This allowed us to test our module as a black box, providing a good base for a
+complete rewrite later on.</p>
+
+<p>This is not unit testing nor integration testing, but in between. We also
+planned in the coming weeks on doing a separate full integration testing suite
+that will go from the browser to our servers.</p>
+
+<h2 id="faux-jax-to-the-rescue">faux-jax to the rescue</h2>
+
+<p>Two serious candidates showed up to help in testing HTTP request based
+libraries</p>
+
+<ul>
+  <li><a href="https://github.com/pgte/nock">pgte/nock </a></li>
+  <li>and <a href="http://sinonjs.org/docs/#server">Sinon.js fake XMLHttpRequest</a>.</li>
+</ul>
+
+<p>Unfortunately, none of them met all our requirements. Not to mention, the
+AlgoliaSearch JavaScript client had a really smart failover request strategy:</p>
+
+<ul>
+  <li>use <a href="https://xhr.spec.whatwg.org/">XMLHttpRequest</a> for browsers supporting CORS,</li>
+  <li>or use <a href="https://msdn.microsoft.com/en-us/library/ie/cc288060%28v=vs.85%29.aspx">XDomainRequest</a> for <a href="http://caniuse.com/#feat=cors">IE &lt; 10</a>,</li>
+  <li>or use <a href="https://blog.algolia.com/jsonp-still-mandatory/">JSONP</a> in situations where none of the preceding is available.</li>
+</ul>
+
+<p>This seems complex but we really want to be available and compatible with
+every browser environment.</p>
+
+<ul>
+  <li><strong>Nock</strong> works by mocking calls to the Node.js <a href="https://nodejs.org/api/http.html">http module</a>, but we directly use the XMLHttpRequest object.</li>
+  <li><strong>Sinon.js</strong> was doing a good job but <a href="https://github.com/cjohansen/Sinon.JS/pull/600#issuecomment-74000915">was lacking</a> some <a href="https://msdn.microsoft.com/en-us/library/ie/cc288060%28v=vs.85%29.aspx">XDomainRequest</a> feature detections. Also it was really tied to Sinon.js.</li>
+</ul>
+
+<p>As a result, we created <a href="https://github.com/algolia/faux-
+jax">algolia/faux-jax</a>. It is now pretty stable and can mock XMLHttpRequest, XDomainRequest and
+even http module from Node.js. It means <strong>faux-jax</strong> is an isomorphic HTTP
+mock testing tool. It was not designed to be isomorphic. It was easy to add
+the Node.js support thanks to <a href="https://github.com/moll/node-
+mitm">moll/node-mitm</a>.</p>
+
+<h2 id="testing-stack">Testing stack</h2>
+
+<p>The testing stack is composed of:</p>
+
+<ul>
+  <li><a href="https://github.com/substack/tape/">substack/tape</a>, isomorphic testing and assertion framework</li>
+  <li><a href="https://github.com/defunctzombie/zuul/">defunctzombie/zuul</a>, local and continuous integration test runner</li>
+  <li><a href="https://github.com/algolia/faux-jax">algolia/faux-jax</a>, isomorphic HTTP mocking library</li>
+</ul>
+
+<p>The fun part is done, now onto the tedious one: <strong>writing tests</strong>.</p>
+
+<h2 id="spliting-tests-cases">Spliting tests cases</h2>
+
+<p>We divided our tests in two categories:</p>
+
+<ul>
+  <li><strong>simple test cases</strong>: check that an API command will generate the corresponding HTTP call</li>
+  <li><strong>advanced tests</strong>: timeouts, keep-alive, JSONP, request strategy, DNS fallback, ..</li>
+</ul>
+
+<h3 id="simple-test-cases">Simple test cases</h3>
+
+<p>Simple test cases were written as <a href="https://github.com/golang/go/wiki/TableDrivenTests">table driven
+tests</a>:</p>
+
+<p><a href="https://blog.algolia.com
+/wp-content/uploads/2015/04/2015-04-27-161853_1266x829_scrot.png"><img src="assets/2015-04-27-161853_1266x829_scrot.png" alt="It's a simple
+JavaScript file, exporting test cases as an
+array" /></a> It’s a
+simple JavaScript file, <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/test/spec/common/index/test-
+cases/addUserKey.js#L1">exporting test cases as an
+array</a></p>
+
+<p>Creating a testing stack that understands theses test-cases was some work. But
+the reward was worth it: the TDD feedback loop is great. Adding a new feature
+is easy: fire editor, add test, implement annnnnd done.</p>
+
+<h3 id="advanced-tests">Advanced tests</h3>
+
+<p>Complex test cases like JSONP fallback, timeouts and errors, were handled in
+separate, <a href="https://github.com/algolia/algoliasearch-
+client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/test/spec/browser
+/request-strategy/use-JSONP-when-XHR-error.js">more advanced tests</a>:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-27-162229_1258x982_scrot.png"><img src="assets/2015-04-27-162229_1258x982_scrot.png" alt="Our testing
+stack rely on substack/tape" /></a> Here we test
+that we are using JSONP when XHR fails</p>
+
+<h2 id="testing-workflow">Testing workflow</h2>
+
+<p>To be able to run our tests we chose
+<a href="https://github.com/defunctzombie/zuul/">defunctzombie/zuul</a>.</p>
+
+<h3 id="local-development">Local development</h3>
+
+<p>For local development, we have an <strong>npm test</strong> task that will:</p>
+
+<ul>
+  <li>launch the browser tests using <a href="http://phantomjs.org/">phantomjs</a>,</li>
+  <li>run the Node.js tests,</li>
+  <li>lint using <a href="http://eslint.org/">eslint</a>.</li>
+</ul>
+
+<p>You can <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/package.json#L12">see the task</a> in the
+package.json. Once run it looks like this:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-27-170339_976x845_scrot.png"><img src="assets/2015-04-27-170339_976x845_scrot.png" alt="640 passing
+assertions and counting!" /></a> 640 passing
+assertions and counting!</p>
+
+<p>But phantomjs is no real browser so it should not be the only answer to “Is my
+module working in browsers?”. To solve this, we have an <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/package.json#L16">npm run
+dev</a> task that
+will expose our tests in a simple web server accessible by any browser:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-27-170757_1288x486_scrot.png"><img src="assets/2015-04-27-170757_1288x486_scrot.png" alt="All of theses
+features are provided by defunctzombie/zuul" /></a> All of theses
+features are provided by defunctzombie/zuul</p>
+
+<p>Finally, if you have <a href="https://www.virtualbox.org/">virtual machines</a>, you can
+test in any browser you want, all locally:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-27-171034_1296x385_scrot.png"><img src="assets/2015-04-27-171034_1296x385_scrot.png" alt="Here's a
+VirtualBox setup created with xdissent/ievms" /></a> Here’s a
+VirtualBox setup created with
+<a href="https://github.com/xdissent/ievms">xdissent/ievms</a></p>
+
+<p>What comes next after setting up a good local development workflow? Continuous
+integration setup!</p>
+
+<h3 id="continuous-integration">Continuous integration</h3>
+
+<p><a href="https://github.com/defunctzombie/zuul/">defunctzombie/zuul</a> supports running
+tests using <a href="https://saucelabs.com/">Saucelabs</a> browsers. Saucelabs provides
+browsers as a service (manual testing or Selenium automation). It also has a
+nice OSS plan called <a href="https://saucelabs.com/opensauce/">Opensauce</a>. We patched
+our <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/.zuul.yml">.zuul.yml</a> configuration file
+to specify what browsers we want to test. You can find all the details in
+<a href="https://github.com/defunctzombie/zuul/wiki/Cloud-testing">zuul’s wiki</a>.</p>
+
+<p>Now there’s only one missing piece: <a href="https://travis-ci.org/">Travis CI</a>.
+Travis runs our tests in all browsers defined in our .zuul.yml file. Our
+<a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/.travis.yml">travis.yml</a> looks like this:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-27-172249_1248x868_scrot.png"><img src="assets/2015-04-27-172249_1248x868_scrot.png" alt="All platforms are tested using travis
+matrixes" />
+</a>
+All platforms are tested using a <a href="http://docs.travis-ci.com/user/build-configuration/#The-Build-Matrix">travis build
+matrix</a></p>
+
+<p>Right now tests are taking a bit too long so we will soon split them between
+desktop and mobile.</p>
+
+<p>We also want to to tests on pull requests using only latest stable versions of
+all browsers. So that it does not takes too long. As a reward, we get a <a href="https://docs.saucelabs.com/reference/status-images/">nice
+badge</a> to display in our
+Github <a href="https://github.com/algolia/algoliasearch-client-js#algolia-
+search-api-client-for-javascript">readme</a>:</p>
+
+<p><a href="https://blog.algolia.com
+/wp-content/uploads/2015/04/2015-04-27-174139_920x306_scrot.png"><img src="assets/2015-04-27-174139_920x306_scrot.png" alt="Gray color
+means the test is currently
+running" /></a> Gray color
+means the test is currently running</p>
+
+<h1 id="challenge-2-redesign-and-rewrite">Challenge #2: redesign and rewrite</h1>
+
+<p>Once we had a usable testing stack, we started our rewrite, the <a href="https://github.com/algolia/algoliasearch-client-
+js/issues?q=milestone%3AV3">V3
+milestone</a> on Github.</p>
+
+<h2 id="initialization">Initialization</h2>
+
+<p>We dropped the <strong>new AlgoliaSearch()</strong> usage in favor of just
+<strong>algoliasearch()</strong>. It allows us to hide implementation details to our API
+users.</p>
+
+<p>Before:</p>
+
+<blockquote>
+  <p>new AlgoliaSearch(applicationID, apiKey, opts);</p>
+</blockquote>
+
+<p>After:</p>
+
+<blockquote>
+  <p>algoliasearch(applicationID, apiKey, opts);</p>
+</blockquote>
+
+<h2 id="callback-convention">Callback convention</h2>
+
+<p>Our JavaScript client now follows the <a href="http://fredkschott.com/post/2014/03/understanding-error-first-
+callbacks-in-node-js/">error-
+first</a> and <a href="http://blog.izs.me/post/59142742143
+/designing-apis-for-asynchrony">callback-last</a> conventions. We had to break some methods to
+do so.</p>
+
+<p>Before:</p>
+
+<blockquote>
+  <p>client.method(param, callback, param, param);</p>
+</blockquote>
+
+<p>After:</p>
+
+<blockquote>
+  <p>client.method(params, param, param, params, callback);</p>
+</blockquote>
+
+<p>This allows our callback lovers to use libraries like
+<a href="https://github.com/caolan/async">caolan/async</a> very easily.</p>
+
+<h2 id="promises-and-callbacks-support">Promises and callbacks support</h2>
+
+<p>Promises are a great way to handle the asynchronous flow of your application.</p>
+
+<blockquote>
+  <p>Promise partisan? Callback connoisseur? My API now lets you switch between
+the two! <a href="http://t.co/uPhej2yAwF">http://t.co/uPhej2yAwF</a> (thanks
+<a href="https://twitter.com/NickColley">@NickColley</a>!)</p>
+</blockquote>
+
+<blockquote>
+
+</blockquote>
+
+<blockquote>
+  <p>— pouchdb (@pouchdb) <a href="https://twitter.com/pouchdb/status/575310959947956224">March 10,
+2015</a></p>
+</blockquote>
+
+<p>We implemented both promises and callbacks, it was nearly a no-brainer. In
+every command, if you do not provide a callback, you get a <a href="https://d
+eveloper.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a>.
+We use native promises in <a href="http://caniuse.com/#feat=promises">compatible
+environments</a> and
+<a href="https://github.com/jakearchibald/es6-promise/">jakearchibald/es6-promise</a> as
+a polyfill.</p>
+
+<h2 id="algoliasearchhelper-removal">AlgoliaSearchHelper removal</h2>
+
+<p>The main library was also previously exporting window.AlgoliaSearchHelper to
+ease the development of awesome search UIs. We externalized this project and
+it now has now has a new home at <a href="https://github.com/algolia/algoliasearch-helper-js">algolia/algoliasearch-helper-
+js</a>.</p>
+
+<h2 id="umd">UMD</h2>
+
+<blockquote>
+  <p>UMD: JavaScript modules that run anywhere</p>
+</blockquote>
+
+<p>The previous version was directly exporting multiple properties in the
+<strong>window</strong> object. As we wanted our new library to be easily compatible with a
+broad range of module loaders, we made it <a href="https://github.com/umdjs/umd">UMD</a>
+compatible. It means our library can be used:</p>
+
+<ul>
+  <li>with a simple <code class="highlighter-rouge">&lt;script&gt;</code>, it will export <strong>algoliasearch</strong> in the <strong>window</strong> object</li>
+  <li>using <a href="http://browserify.org/">browserify</a>, <a href="http://webpack.github.io/">webpack</a>, <a href="http://requirejs.org/">requirejs</a>: any module loader</li>
+  <li>in <a href="https://nodejs.org/">Node.js</a></li>
+</ul>
+
+<p>This was achieved by writing our code in a
+<a href="http://en.wikipedia.org/wiki/CommonJS">CommonJS</a> style and then use the
+standalone build feature of browserify.</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-28-224616_1126x129_scrot.png"><img src="assets/2015-04-28-224616_1126x129_scrot.png" alt="see browserify
+usage" /></a> see
+<a href="https://github.com/substack/node-
+browserify#usage">browserify usage</a></p>
+
+<h2 id="multiple-builds">Multiple builds</h2>
+
+<p>Our JavaScript client isn’t only one build, we have multiple builds:</p>
+
+<ul>
+  <li>vanilla JavaScript using native xhrs and Promises</li>
+  <li>jQuery build using <a href="http://api.jquery.com/jquery.ajax/">jQuery.ajax</a> and returns <a href="https://api.jquery.com/category/deferred-object/">jQuery promises</a></li>
+  <li>AngularJS build is using <a href="https://docs.angularjs.org/api/ng/service/$http">$http</a> service and returns <a href="https://docs.angularjs.org/api/ng/service/$q">AngularJS promises</a></li>
+  <li><a href="https://parse.com/">Parse.com</a> build is using parse cloud <a href="https://parse.com/docs/cloud_code_guide#networking">http</a> and <a href="https://parse.com/docs/js_guide#promises">promises</a></li>
+  <li>Node.js, iojs are using the <a href="https://nodejs.org/api/http.html">http module</a> and native Promises</li>
+</ul>
+
+<p>Previously this was all handled in the main JavaScript file, leading to unsafe
+<a href="https://github.com/algolia/algoliasearch-client-js/blob/ba71a
+68005945c73f7157a8222a9c758e332eceb/src/algoliasearch.js#L541-L553">code like this</a>:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-28-225743_1629x497_scrot.png"><img src="assets/2015-04-28-225743_1629x497_scrot.png" alt="2015-04-28-225743_1629x497_scrot" /></a></p>
+
+<p>How do we solve this? Using inheritance! JavaScript prototypal inheritance is
+the new code smell in 2015. For us it was a good way to share most of the code
+between our builds. As a result every entry point of our builds are inheriting
+from the <a href="https://github.com/algolia/algoliasearch-
+client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/src/AlgoliaSearch.js">src/AlgoliaSearch.js</a>.</p>
+
+<p>Every build then need to define how to:</p>
+
+<ul>
+  <li>do http request through <a href="https://github.com/algolia/algoliasearch-client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/src/browser/builds/algoliasearch.js#L46-L150">AlgoliaSearch.prototype._request</a></li>
+  <li>return promises with <a href="https://github.com/algolia/algoliasearch-client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/src/browser/builds/algoliasearch.js#L167-L179">AlgoliaSearch.prototype._promise</a></li>
+  <li>use a request fallback where needed with <a href="https://github.com/algolia/algoliasearch-client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/src/browser/builds/algoliasearch.js#L152-L165">AlgoliaSearch.prototype._request.fallback</a></li>
+</ul>
+
+<p>Using a simple inheritance pattern we were able to solve a great challenge.</p>
+
+<p><a href="https://blog.algolia.com
+/wp-content/uploads/2015/04/2015-04-28-232019_1153x526_scrot.png"><img src="assets/2015-04-28-232019_1153x526_scrot.png" alt="Example of the
+vanilla JavaScript
+build" /></a> Example of
+the vanilla JavaScript build</p>
+
+<p>Finally, we have <a href="https://github.com/algolia/algoliasearch-
+client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/scripts/build">a build script</a> that
+will generate all the needed files for each environment.</p>
+
+<h2 id="challenge-3-backward-compatibility">Challenge #3: backward compatibility</h2>
+
+<p>We could not completely modernize our JavaScript clients while keeping a full
+backward compatibility between versions. We had to break some of the previous
+usages to level up our JavaScript stack.</p>
+
+<p>But we also wanted to provide a good experience for our previous users when
+they wanted to upgrade:</p>
+
+<ul>
+  <li>we re-exported previous constructors like window.AlgoliaSearch*. But we now <strong>throw</strong> if it’s used</li>
+  <li>we wrote a clear <a href="https://github.com/algolia/algoliasearch-client-js/wiki/Migration-guide-from-2.x.x-to-3.x.x">migration guide</a> for our existing Node.js and JavaScript users</li>
+  <li>we used <a href="https://docs.npmjs.com/cli/deprecate">npm deprecate</a> on our previous Node.js module to inform our current user base that we moved to a new client</li>
+  <li>we created legacy branches so that we can continue to push critical updates to previous versions when needed</li>
+</ul>
+
+<h2 id="make-it-isomorphic">Make it isomorphic!</h2>
+
+<p>Our final step was to make our JavaScript client work in both Node.js and the
+browser.</p>
+
+<p>Having separated the builds implementation helped us a lot, because the
+Node.js build is a regular build only using the http module from Node.js.</p>
+
+<p>Then we only had to tell module loaders to load <strong>index.js</strong> on the server and
+<strong>src/browser/..</strong> in browsers.</p>
+
+<p>This last step was done by configuring browserify in <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/package.json#L5-L8">our
+package.json</a>:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-28-232444_1275x569_scrot.png"><img src="assets/2015-04-28-232444_1275x569_scrot.png" alt="the browser field from browserify also works in webpack" /></a> the <a href="https://github.com/substack/node-browserify#browser-field">browser
+field</a> from
+browserify also works in webpack</p>
+
+<p>If you are using the <strong>algoliasearch</strong> module with browserify or webpack, you
+will get our browser implementation automatically.</p>
+
+<p>The <strong>faux-jax</strong> library is released under MIT like all our open source
+projects. Any feedback or improvement idea are welcome, we are dedicated to
+make our JS client your best friend :)</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2015/05/06/modern-javascript-libraries-the-isomorphic-way.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2015/04/20/quadrant-io-solves-the-frustration-of-economic-data-search-with-algolia.html">&laquo; Quadrant.io solves the frustration of economic data search with Algolia</a>
+  
+  
+    <a class="next" href="/2015/05/11/dns-fallback-for-better-resilience.html">DNS fallback for better resilience &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>Algolia’s DNA is really about performance. We want our search engine to answer
+relevant results as fast as possible.</p>
+
+<p>To achieve the best end-to-end performance we’ve decided to go with JavaScript
+since the total beginning of Algolia. Our end-users search using our REST API
+directly from their browser - with JavaScript - without going through the
+websites’ backends.</p>
+
+<p>Our JavaScript &amp; Node.js API clients were implemented 2 years ago and were now
+lacking of all modern best practices:</p>
+
+<ul>
+  <li>not following the <a href="http://fredkschott.com/post/2014/03/understanding-error-first-callbacks-in-node-js/">error-first</a> or <a href="http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony">callback-last</a> conventions;</li>
+  <li>inconsistent API between the Node.js and the browser implementations;</li>
+  <li>no <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a> support;</li>
+  <li>Node.js module named <a href="https://www.npmjs.com/package/algolia-search">algolia-search</a>, browser module named <a href="https://www.npmjs.com/package/algoliasearch">algoliasearch</a>;</li>
+  <li>cannot use the same module in Node.js or the browser (obviously);</li>
+  <li>browser module could not be used with <a href="http://browserify.org/">browserify</a> or <a href="http://webpack.github.io/">webpack</a>. It was exporting multiple properties directly in the window object.</li>
+</ul>
+
+<p>This blog post is a summary of the three main challenges we faced while
+modernizing our JavaScript client.</p>
+
+<h2 id="tldr">tl;dr;</h2>
+
+<p>Now the good news: we have a new isomorphic <a href="http://github.com/algolia/algoliasearch-client-js">JavaScript API
+client</a>.</p>
+
+<blockquote>
+  <p>Isomorphic JavaScript apps are JavaScript applications that can run both
+client-side and server-side.</p>
+</blockquote>
+
+<p>The backend and frontend share the same code.</p>
+
+<blockquote>
+
+</blockquote>
+
+<blockquote>
+  <p><a href="http://isomorphic.net/">isomorphic.net</a></p>
+</blockquote>
+
+<p>Here are the main features of this new API client:</p>
+
+<ul>
+  <li>works in <a href="https://nodejs.org/">Node.js</a> 0.10, 0.12, <a href="https://iojs.org/en/index.html">iojs</a> and from Internet Explorer 8 up to modern browsers;</li>
+  <li>has a <a href="https://github.com/algolia/algoliasearch-client-js#callback-convention">Promise + callback</a> API;</li>
+  <li>is available at <a href="https://www.npmjs.com/package/algoliasearch">npmjs.com/algoliasearch</a> and on <a href="http://cdn.jsdelivr.net/algoliasearch/3/algoliasearch.min.js">cdn.jsdelivr.net</a>;</li>
+  <li>has <a href="https://github.com/algolia/algoliasearch-client-js/tree/master/dist">builds</a> for jQuery, AngularJS and Parse.com;</li>
+  <li>is compatible with all module loaders like <a href="http://browserify.org/">browserify</a> or <a href="http://webpack.github.io/">webpack</a>;</li>
+  <li>is fully <a href="https://github.com/algolia/algoliasearch-client-js/tree/master/test">tested</a> in all supported environments.</li>
+</ul>
+
+<p>If you were using our previous libraries, we have migration guides for both
+<a href="https://github.com/algolia/algoliasearch-client-
+js/wiki/Node.js-v1.x.x-migration-guide">Node.js</a> and <a href="https://github.com/algolia/algoliasearch-client-js/wiki/Migration-
+guide-from-2.x.x-to-3.x.x">the
+browser</a>.</p>
+
+<p>#</p>
+
+<h1 id="challenge-1-testing">Challenge #1: testing</h1>
+
+<p>Before being able to merge the Node.js and browser module, we had to remember
+how the current code is working. An easy way to understand what a code is
+doing is to read the tests. Unfortunately, in the previous version of the
+library, we had <a href="https://github.com/algolia/algoliasearch-
+client-js/tree/ba71a68005945c73f7157a8222a9c758e332eceb/test">only one test</a>. One test was
+not enough to rewrite our library. Let’s go testing!</p>
+
+<h2 id="unit-integration">Unit? Integration?</h2>
+
+<p>When no tests are written on a library of <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/ba71a68005945c73f7157a8222a9c758e332eceb/src/algoliasearch.js#L1484">~1500+
+LOC</a>,
+what are the tests you should write first?</p>
+
+<p>Unit testing would be too close to the implementation. As we are going to
+rewrite a lot of code later on, we better not go too far on this road right
+now.</p>
+
+<p>Here’s the flow of our JavaScript library when doing a search:</p>
+
+<ul>
+  <li>initialize the library with <code class="highlighter-rouge">algoliasearch()</code></li>
+  <li>call <code class="highlighter-rouge">index.search('something', callback)</code></li>
+  <li>browser issue an HTTP request</li>
+  <li><code class="highlighter-rouge">callback(err, content)</code></li>
+</ul>
+
+<p>From a testing point of view, this can be summarized as:</p>
+
+<ul>
+  <li>input: method call</li>
+  <li>output: HTTP request</li>
+</ul>
+
+<p>Integration testing for a JavaScript library doing HTTP calls is interesting
+but does not scale well.</p>
+
+<p>Indeed, having to reach Algolia servers in each test would introduce a shared
+testing state amongst developers and continuous integration. It would also
+have a slow TDD feedback because of heavy network usage.</p>
+
+<p>Our strategy for testing our JavaScript API client was to mock (do not run
+away right now) the <a href="https://xhr.spec.whatwg.org/">XMLHttpRequest</a> object.
+This allowed us to test our module as a black box, providing a good base for a
+complete rewrite later on.</p>
+
+<p>This is not unit testing nor integration testing, but in between. We also
+planned in the coming weeks on doing a separate full integration testing suite
+that will go from the browser to our servers.</p>
+
+<h2 id="faux-jax-to-the-rescue">faux-jax to the rescue</h2>
+
+<p>Two serious candidates showed up to help in testing HTTP request based
+libraries</p>
+
+<ul>
+  <li><a href="https://github.com/pgte/nock">pgte/nock </a></li>
+  <li>and <a href="http://sinonjs.org/docs/#server">Sinon.js fake XMLHttpRequest</a>.</li>
+</ul>
+
+<p>Unfortunately, none of them met all our requirements. Not to mention, the
+AlgoliaSearch JavaScript client had a really smart failover request strategy:</p>
+
+<ul>
+  <li>use <a href="https://xhr.spec.whatwg.org/">XMLHttpRequest</a> for browsers supporting CORS,</li>
+  <li>or use <a href="https://msdn.microsoft.com/en-us/library/ie/cc288060%28v=vs.85%29.aspx">XDomainRequest</a> for <a href="http://caniuse.com/#feat=cors">IE &lt; 10</a>,</li>
+  <li>or use <a href="https://blog.algolia.com/jsonp-still-mandatory/">JSONP</a> in situations where none of the preceding is available.</li>
+</ul>
+
+<p>This seems complex but we really want to be available and compatible with
+every browser environment.</p>
+
+<ul>
+  <li><strong>Nock</strong> works by mocking calls to the Node.js <a href="https://nodejs.org/api/http.html">http module</a>, but we directly use the XMLHttpRequest object.</li>
+  <li><strong>Sinon.js</strong> was doing a good job but <a href="https://github.com/cjohansen/Sinon.JS/pull/600#issuecomment-74000915">was lacking</a> some <a href="https://msdn.microsoft.com/en-us/library/ie/cc288060%28v=vs.85%29.aspx">XDomainRequest</a> feature detections. Also it was really tied to Sinon.js.</li>
+</ul>
+
+<p>As a result, we created <a href="https://github.com/algolia/faux-
+jax">algolia/faux-jax</a>. It is now pretty stable and can mock XMLHttpRequest, XDomainRequest and
+even http module from Node.js. It means <strong>faux-jax</strong> is an isomorphic HTTP
+mock testing tool. It was not designed to be isomorphic. It was easy to add
+the Node.js support thanks to <a href="https://github.com/moll/node-
+mitm">moll/node-mitm</a>.</p>
+
+<h2 id="testing-stack">Testing stack</h2>
+
+<p>The testing stack is composed of:</p>
+
+<ul>
+  <li><a href="https://github.com/substack/tape/">substack/tape</a>, isomorphic testing and assertion framework</li>
+  <li><a href="https://github.com/defunctzombie/zuul/">defunctzombie/zuul</a>, local and continuous integration test runner</li>
+  <li><a href="https://github.com/algolia/faux-jax">algolia/faux-jax</a>, isomorphic HTTP mocking library</li>
+</ul>
+
+<p>The fun part is done, now onto the tedious one: <strong>writing tests</strong>.</p>
+
+<h2 id="spliting-tests-cases">Spliting tests cases</h2>
+
+<p>We divided our tests in two categories:</p>
+
+<ul>
+  <li><strong>simple test cases</strong>: check that an API command will generate the corresponding HTTP call</li>
+  <li><strong>advanced tests</strong>: timeouts, keep-alive, JSONP, request strategy, DNS fallback, ..</li>
+</ul>
+
+<h3 id="simple-test-cases">Simple test cases</h3>
+
+<p>Simple test cases were written as <a href="https://github.com/golang/go/wiki/TableDrivenTests">table driven
+tests</a>:</p>
+
+<p><a href="https://blog.algolia.com
+/wp-content/uploads/2015/04/2015-04-27-161853_1266x829_scrot.png"><img src="assets/2015-04-27-161853_1266x829_scrot.png" alt="It's a simple
+JavaScript file, exporting test cases as an
+array" /></a> It’s a
+simple JavaScript file, <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/test/spec/common/index/test-
+cases/addUserKey.js#L1">exporting test cases as an
+array</a></p>
+
+<p>Creating a testing stack that understands theses test-cases was some work. But
+the reward was worth it: the TDD feedback loop is great. Adding a new feature
+is easy: fire editor, add test, implement annnnnd done.</p>
+
+<h3 id="advanced-tests">Advanced tests</h3>
+
+<p>Complex test cases like JSONP fallback, timeouts and errors, were handled in
+separate, <a href="https://github.com/algolia/algoliasearch-
+client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/test/spec/browser
+/request-strategy/use-JSONP-when-XHR-error.js">more advanced tests</a>:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-27-162229_1258x982_scrot.png"><img src="assets/2015-04-27-162229_1258x982_scrot.png" alt="Our testing
+stack rely on substack/tape" /></a> Here we test
+that we are using JSONP when XHR fails</p>
+
+<h2 id="testing-workflow">Testing workflow</h2>
+
+<p>To be able to run our tests we chose
+<a href="https://github.com/defunctzombie/zuul/">defunctzombie/zuul</a>.</p>
+
+<h3 id="local-development">Local development</h3>
+
+<p>For local development, we have an <strong>npm test</strong> task that will:</p>
+
+<ul>
+  <li>launch the browser tests using <a href="http://phantomjs.org/">phantomjs</a>,</li>
+  <li>run the Node.js tests,</li>
+  <li>lint using <a href="http://eslint.org/">eslint</a>.</li>
+</ul>
+
+<p>You can <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/package.json#L12">see the task</a> in the
+package.json. Once run it looks like this:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-27-170339_976x845_scrot.png"><img src="assets/2015-04-27-170339_976x845_scrot.png" alt="640 passing
+assertions and counting!" /></a> 640 passing
+assertions and counting!</p>
+
+<p>But phantomjs is no real browser so it should not be the only answer to “Is my
+module working in browsers?”. To solve this, we have an <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/package.json#L16">npm run
+dev</a> task that
+will expose our tests in a simple web server accessible by any browser:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-27-170757_1288x486_scrot.png"><img src="assets/2015-04-27-170757_1288x486_scrot.png" alt="All of theses
+features are provided by defunctzombie/zuul" /></a> All of theses
+features are provided by defunctzombie/zuul</p>
+
+<p>Finally, if you have <a href="https://www.virtualbox.org/">virtual machines</a>, you can
+test in any browser you want, all locally:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-27-171034_1296x385_scrot.png"><img src="assets/2015-04-27-171034_1296x385_scrot.png" alt="Here's a
+VirtualBox setup created with xdissent/ievms" /></a> Here’s a
+VirtualBox setup created with
+<a href="https://github.com/xdissent/ievms">xdissent/ievms</a></p>
+
+<p>What comes next after setting up a good local development workflow? Continuous
+integration setup!</p>
+
+<h3 id="continuous-integration">Continuous integration</h3>
+
+<p><a href="https://github.com/defunctzombie/zuul/">defunctzombie/zuul</a> supports running
+tests using <a href="https://saucelabs.com/">Saucelabs</a> browsers. Saucelabs provides
+browsers as a service (manual testing or Selenium automation). It also has a
+nice OSS plan called <a href="https://saucelabs.com/opensauce/">Opensauce</a>. We patched
+our <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/.zuul.yml">.zuul.yml</a> configuration file
+to specify what browsers we want to test. You can find all the details in
+<a href="https://github.com/defunctzombie/zuul/wiki/Cloud-testing">zuul’s wiki</a>.</p>
+
+<p>Now there’s only one missing piece: <a href="https://travis-ci.org/">Travis CI</a>.
+Travis runs our tests in all browsers defined in our .zuul.yml file. Our
+<a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/.travis.yml">travis.yml</a> looks like this:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-27-172249_1248x868_scrot.png"><img src="assets/2015-04-27-172249_1248x868_scrot.png" alt="All platforms are tested using travis
+matrixes" />
+</a>
+All platforms are tested using a <a href="http://docs.travis-ci.com/user/build-configuration/#The-Build-Matrix">travis build
+matrix</a></p>
+
+<p>Right now tests are taking a bit too long so we will soon split them between
+desktop and mobile.</p>
+
+<p>We also want to to tests on pull requests using only latest stable versions of
+all browsers. So that it does not takes too long. As a reward, we get a <a href="https://docs.saucelabs.com/reference/status-images/">nice
+badge</a> to display in our
+Github <a href="https://github.com/algolia/algoliasearch-client-js#algolia-
+search-api-client-for-javascript">readme</a>:</p>
+
+<p><a href="https://blog.algolia.com
+/wp-content/uploads/2015/04/2015-04-27-174139_920x306_scrot.png"><img src="assets/2015-04-27-174139_920x306_scrot.png" alt="Gray color
+means the test is currently
+running" /></a> Gray color
+means the test is currently running</p>
+
+<h1 id="challenge-2-redesign-and-rewrite">Challenge #2: redesign and rewrite</h1>
+
+<p>Once we had a usable testing stack, we started our rewrite, the <a href="https://github.com/algolia/algoliasearch-client-
+js/issues?q=milestone%3AV3">V3
+milestone</a> on Github.</p>
+
+<h2 id="initialization">Initialization</h2>
+
+<p>We dropped the <strong>new AlgoliaSearch()</strong> usage in favor of just
+<strong>algoliasearch()</strong>. It allows us to hide implementation details to our API
+users.</p>
+
+<p>Before:</p>
+
+<blockquote>
+  <p>new AlgoliaSearch(applicationID, apiKey, opts);</p>
+</blockquote>
+
+<p>After:</p>
+
+<blockquote>
+  <p>algoliasearch(applicationID, apiKey, opts);</p>
+</blockquote>
+
+<h2 id="callback-convention">Callback convention</h2>
+
+<p>Our JavaScript client now follows the <a href="http://fredkschott.com/post/2014/03/understanding-error-first-
+callbacks-in-node-js/">error-
+first</a> and <a href="http://blog.izs.me/post/59142742143
+/designing-apis-for-asynchrony">callback-last</a> conventions. We had to break some methods to
+do so.</p>
+
+<p>Before:</p>
+
+<blockquote>
+  <p>client.method(param, callback, param, param);</p>
+</blockquote>
+
+<p>After:</p>
+
+<blockquote>
+  <p>client.method(params, param, param, params, callback);</p>
+</blockquote>
+
+<p>This allows our callback lovers to use libraries like
+<a href="https://github.com/caolan/async">caolan/async</a> very easily.</p>
+
+<h2 id="promises-and-callbacks-support">Promises and callbacks support</h2>
+
+<p>Promises are a great way to handle the asynchronous flow of your application.</p>
+
+<blockquote>
+  <p>Promise partisan? Callback connoisseur? My API now lets you switch between
+the two! <a href="http://t.co/uPhej2yAwF">http://t.co/uPhej2yAwF</a> (thanks
+<a href="https://twitter.com/NickColley">@NickColley</a>!)</p>
+</blockquote>
+
+<blockquote>
+
+</blockquote>
+
+<blockquote>
+  <p>— pouchdb (@pouchdb) <a href="https://twitter.com/pouchdb/status/575310959947956224">March 10,
+2015</a></p>
+</blockquote>
+
+<p>We implemented both promises and callbacks, it was nearly a no-brainer. In
+every command, if you do not provide a callback, you get a <a href="https://d
+eveloper.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise">Promise</a>.
+We use native promises in <a href="http://caniuse.com/#feat=promises">compatible
+environments</a> and
+<a href="https://github.com/jakearchibald/es6-promise/">jakearchibald/es6-promise</a> as
+a polyfill.</p>
+
+<h2 id="algoliasearchhelper-removal">AlgoliaSearchHelper removal</h2>
+
+<p>The main library was also previously exporting window.AlgoliaSearchHelper to
+ease the development of awesome search UIs. We externalized this project and
+it now has now has a new home at <a href="https://github.com/algolia/algoliasearch-helper-js">algolia/algoliasearch-helper-
+js</a>.</p>
+
+<h2 id="umd">UMD</h2>
+
+<blockquote>
+  <p>UMD: JavaScript modules that run anywhere</p>
+</blockquote>
+
+<p>The previous version was directly exporting multiple properties in the
+<strong>window</strong> object. As we wanted our new library to be easily compatible with a
+broad range of module loaders, we made it <a href="https://github.com/umdjs/umd">UMD</a>
+compatible. It means our library can be used:</p>
+
+<ul>
+  <li>with a simple <code class="highlighter-rouge">&lt;script&gt;</code>, it will export <strong>algoliasearch</strong> in the <strong>window</strong> object</li>
+  <li>using <a href="http://browserify.org/">browserify</a>, <a href="http://webpack.github.io/">webpack</a>, <a href="http://requirejs.org/">requirejs</a>: any module loader</li>
+  <li>in <a href="https://nodejs.org/">Node.js</a></li>
+</ul>
+
+<p>This was achieved by writing our code in a
+<a href="http://en.wikipedia.org/wiki/CommonJS">CommonJS</a> style and then use the
+standalone build feature of browserify.</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-28-224616_1126x129_scrot.png"><img src="assets/2015-04-28-224616_1126x129_scrot.png" alt="see browserify
+usage" /></a> see
+<a href="https://github.com/substack/node-
+browserify#usage">browserify usage</a></p>
+
+<h2 id="multiple-builds">Multiple builds</h2>
+
+<p>Our JavaScript client isn’t only one build, we have multiple builds:</p>
+
+<ul>
+  <li>vanilla JavaScript using native xhrs and Promises</li>
+  <li>jQuery build using <a href="http://api.jquery.com/jquery.ajax/">jQuery.ajax</a> and returns <a href="https://api.jquery.com/category/deferred-object/">jQuery promises</a></li>
+  <li>AngularJS build is using <a href="https://docs.angularjs.org/api/ng/service/$http">$http</a> service and returns <a href="https://docs.angularjs.org/api/ng/service/$q">AngularJS promises</a></li>
+  <li><a href="https://parse.com/">Parse.com</a> build is using parse cloud <a href="https://parse.com/docs/cloud_code_guide#networking">http</a> and <a href="https://parse.com/docs/js_guide#promises">promises</a></li>
+  <li>Node.js, iojs are using the <a href="https://nodejs.org/api/http.html">http module</a> and native Promises</li>
+</ul>
+
+<p>Previously this was all handled in the main JavaScript file, leading to unsafe
+<a href="https://github.com/algolia/algoliasearch-client-js/blob/ba71a
+68005945c73f7157a8222a9c758e332eceb/src/algoliasearch.js#L541-L553">code like this</a>:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-28-225743_1629x497_scrot.png"><img src="assets/2015-04-28-225743_1629x497_scrot.png" alt="2015-04-28-225743_1629x497_scrot" /></a></p>
+
+<p>How do we solve this? Using inheritance! JavaScript prototypal inheritance is
+the new code smell in 2015. For us it was a good way to share most of the code
+between our builds. As a result every entry point of our builds are inheriting
+from the <a href="https://github.com/algolia/algoliasearch-
+client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/src/AlgoliaSearch.js">src/AlgoliaSearch.js</a>.</p>
+
+<p>Every build then need to define how to:</p>
+
+<ul>
+  <li>do http request through <a href="https://github.com/algolia/algoliasearch-client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/src/browser/builds/algoliasearch.js#L46-L150">AlgoliaSearch.prototype._request</a></li>
+  <li>return promises with <a href="https://github.com/algolia/algoliasearch-client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/src/browser/builds/algoliasearch.js#L167-L179">AlgoliaSearch.prototype._promise</a></li>
+  <li>use a request fallback where needed with <a href="https://github.com/algolia/algoliasearch-client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/src/browser/builds/algoliasearch.js#L152-L165">AlgoliaSearch.prototype._request.fallback</a></li>
+</ul>
+
+<p>Using a simple inheritance pattern we were able to solve a great challenge.</p>
+
+<p><a href="https://blog.algolia.com
+/wp-content/uploads/2015/04/2015-04-28-232019_1153x526_scrot.png"><img src="assets/2015-04-28-232019_1153x526_scrot.png" alt="Example of the
+vanilla JavaScript
+build" /></a> Example of
+the vanilla JavaScript build</p>
+
+<p>Finally, we have <a href="https://github.com/algolia/algoliasearch-
+client-js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/scripts/build">a build script</a> that
+will generate all the needed files for each environment.</p>
+
+<h2 id="challenge-3-backward-compatibility">Challenge #3: backward compatibility</h2>
+
+<p>We could not completely modernize our JavaScript clients while keeping a full
+backward compatibility between versions. We had to break some of the previous
+usages to level up our JavaScript stack.</p>
+
+<p>But we also wanted to provide a good experience for our previous users when
+they wanted to upgrade:</p>
+
+<ul>
+  <li>we re-exported previous constructors like window.AlgoliaSearch*. But we now <strong>throw</strong> if it’s used</li>
+  <li>we wrote a clear <a href="https://github.com/algolia/algoliasearch-client-js/wiki/Migration-guide-from-2.x.x-to-3.x.x">migration guide</a> for our existing Node.js and JavaScript users</li>
+  <li>we used <a href="https://docs.npmjs.com/cli/deprecate">npm deprecate</a> on our previous Node.js module to inform our current user base that we moved to a new client</li>
+  <li>we created legacy branches so that we can continue to push critical updates to previous versions when needed</li>
+</ul>
+
+<h2 id="make-it-isomorphic">Make it isomorphic!</h2>
+
+<p>Our final step was to make our JavaScript client work in both Node.js and the
+browser.</p>
+
+<p>Having separated the builds implementation helped us a lot, because the
+Node.js build is a regular build only using the http module from Node.js.</p>
+
+<p>Then we only had to tell module loaders to load <strong>index.js</strong> on the server and
+<strong>src/browser/..</strong> in browsers.</p>
+
+<p>This last step was done by configuring browserify in <a href="https://github.com/algolia/algoliasearch-client-
+js/blob/1c8df9d09d683915a414e7df87a14236e50dd53c/package.json#L5-L8">our
+package.json</a>:</p>
+
+<p><a href="https://blog.algolia.com/wp-content/uploads/2015/04/2015-04-28-232444_1275x569_scrot.png"><img src="assets/2015-04-28-232444_1275x569_scrot.png" alt="the browser field from browserify also works in webpack" /></a> the <a href="https://github.com/substack/node-browserify#browser-field">browser
+field</a> from
+browserify also works in webpack</p>
+
+<p>If you are using the <strong>algoliasearch</strong> module with browserify or webpack, you
+will get our browser implementation automatically.</p>
+
+<p>The <strong>faux-jax</strong> library is released under MIT like all our open source
+projects. Any feedback or improvement idea are welcome, we are dedicated to
+make our JS client your best friend :)</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

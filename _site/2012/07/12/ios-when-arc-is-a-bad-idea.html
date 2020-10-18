@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">iOS: When Automatic Reference Counting is a Bad Idea</h1>
+</header>
+
+<span class="time">12 Jul 2012</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>I started developing for iOS in 2009 by learning about the Objective-C
+language. At that time ARC (Automatic Reference Counting) was not yet
+available and developers were responsible for alloc/release/autorelease. I
+found it pretty straightforward as it was very similar to C++ and the
+resulting code was very self-explanatory.</p>
+
+<p>When ARC was released at the end of 2011 it made a great impression on me and
+looked like the perfect feature for any programmer coming from the Java world
+who was not familiar with memory management. I started using ARC and
+discovered a major flaw that completely changed my mind. Here is an example :</p>
+
+<p>[Edit 28-Jan-2013] This post describes a bug in ARC that was fixed in Xcode
+4.4.[/Edit]</p>
+
+<p>Let’s start with an example in C++, the sample contains a constructor that
+allocates two vectors, a destructor that destroys them and a compute method
+that just performs a swap between the two vectors. This code is perfectly
+valid and a swap is the perfect operation when you have two sets of data to
+maintain because this is very efficient (just two pointers copy, no data
+copy).</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>class Example {
+public:
+  Example() {
+    nextPositions = new std::vector&lt;int&gt;();
+    currentPositions = new std::vector&lt;int&gt;();
+  }
+  ~Example() {
+    delete nextPositions;
+    delete currentPositions;
+  }
+
+  void compute() {
+    // some code here
+    std::swap(nextPositions, currentPositions);
+    // some other code here
+  }
+
+private:
+  std::vector&lt;int&gt;* nextPositions;
+  std::vector&lt;int&gt;* currentPositions;
+};
+</code></pre></div></div>
+
+<p>Before ARC the objective-C code was very similar and perfectly valid:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// headers
+@interface Example : NSObject {
+  NSMutableArray* nextPositions;
+  NSMutableArray* currentPositions;
+}
+-(void) compute;
+@end
+
+// implementation
+@implementation Example
+-(id) init {
+  self = [super init];
+  if (!self)
+    return nil;
+  nextPositions = [[NSMutableArray alloc] init];
+  currentPositions = [[NSMutableArray alloc] init];
+  return self;
+}
+
+-(void) dealloc {
+  [super dealloc];
+  [nextPositions release];
+  [currentPositions release];
+}
+
+-(void) compute
+{
+  // some processing stuff here
+  NSMutableArray* tmp = nextPositions;
+  nextPositions = currentPositions;
+  currentPositions = tmp;
+  // some processing stuff here
+}
+@end
+</code></pre></div></div>
+
+<p>The semantics are very clear, it is exactly the same as in C++.</p>
+
+<p>So when you start using ARC you tend to do exactly the same thing with less
+code, and you just delete the dealloc method:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// headers
+@interface Example : NSObject {
+  NSMutableArray* nextPositions;
+  NSMutableArray* currentPositions;
+}
+-(void) compute;
+@end
+
+// implementation
+@implementation Example
+-(id) init {
+  self = [super init];
+  if (!self)
+    return nil;
+  nextPositions = [[NSMutableArray alloc] init];
+  currentPositions = [[NSMutableArray alloc] init];
+  return self;
+}
+
+-(void) compute {
+  // some processing stuff here
+  NSMutableArray* tmp = nextPositions;
+  nextPositions = currentPositions;
+  // Wrong, at that step this is too late! nextPositions was deallocated
+  currentPositions = tmp;
+  // some processing stuff here
+}
+@end
+</code></pre></div></div>
+
+<p>The error does not come from a missing strong attribute, because instance
+variables are strong by default. The problem is that ARC does not generate
+code in the variable assignation. You should explicitely add properties and
+use “self.variableName” notation like in the next example. I would encourage
+ARC designers to read this excellent article by Joel Spolsky <a href="http://www.joelonsoftware.com/articles/Wrong.html">“Making Wrong
+Code Look Wrong”</a>. This ARC
+usage is a perfect example of wrong code that looks perfect but leads me to
+the conclusion that ARC is not trustworthy.</p>
+
+<p>Here is the correct version:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// headers
+@interface Example : NSObject {
+  NSMutableArray* nextPositions;
+  NSMutableArray* currentPositions;
+}
+-(void) compute;
+@property (strong, nonatomic) NSMutableArray* nextPositions;
+@property (strong, nonatomic) NSMutableArray* currentPositions;
+@end
+
+// implementation
+@implementation Example
+-(id) init {
+  self = [super init];
+  if (!self)
+    return nil;
+  nextPositions = [[NSMutableArray alloc] init];
+  currentPositions = [[NSMutableArray alloc] init];
+  return self;
+}
+
+-(void) compute {
+  // some processing stuff here
+  NSMutableArray* tmp = self.nextPositions;
+  self.nextPositions = self.currentPositions;
+  self.currentPositions = tmp;
+  // some processing stuff here
+}
+@synthesize nextPositions;
+@synthesize currentPositions;
+@end
+</code></pre></div></div>
+
+<p>I am surprised Apple hasn’t corrected that flaw yet. This is a major issue as
+ARC does not generate code for variable affectation like it does for
+properties (if one of you reads this post and has a complete explanation,
+please tell me!):</p>
+
+<ul>
+  <li>Is it because of a performance issue? I would prefer to have no ARC at all than to see such a behavior.</li>
+  <li>Is this case too complex to be handled? The problem is it undermines ARC’s utility and might get stuck at the prototype stage.</li>
+</ul>
+
+<p>To me, this is a perfect example of a technology driven product. The engineers
+know their product so well that they forget to step back and look at it with a
+fresh eye to analyse the full complexity of their system.</p>
+
+<p>And that leaves me with two important lessons we’ll try to apply to our
+products:</p>
+
+<ul>
+  <li>Always organize user tests, even when your users are developers themselves!</li>
+  <li>Always keep a fresh eye when trying to simplify a product (this one may prove particularly difficult!)</li>
+</ul>
+
+<p>I hope you’ll tell us when we will (inevitably) break these rules!</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2012/07/12/ios-when-arc-is-a-bad-idea.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2012/07/08/were-participating-to-the-evernote-devcup.html">&laquo; Search for Evernote: We're in the Evernote DevCup!</a>
+  
+  
+    <a class="next" href="/2012/07/24/need-performance-on-mobile-use-c-cpp.html">C/C++ is still the only way to have high performance on Mobile &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>I started developing for iOS in 2009 by learning about the Objective-C
+language. At that time ARC (Automatic Reference Counting) was not yet
+available and developers were responsible for alloc/release/autorelease. I
+found it pretty straightforward as it was very similar to C++ and the
+resulting code was very self-explanatory.</p>
+
+<p>When ARC was released at the end of 2011 it made a great impression on me and
+looked like the perfect feature for any programmer coming from the Java world
+who was not familiar with memory management. I started using ARC and
+discovered a major flaw that completely changed my mind. Here is an example :</p>
+
+<p>[Edit 28-Jan-2013] This post describes a bug in ARC that was fixed in Xcode
+4.4.[/Edit]</p>
+
+<p>Let’s start with an example in C++, the sample contains a constructor that
+allocates two vectors, a destructor that destroys them and a compute method
+that just performs a swap between the two vectors. This code is perfectly
+valid and a swap is the perfect operation when you have two sets of data to
+maintain because this is very efficient (just two pointers copy, no data
+copy).</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>class Example {
+public:
+  Example() {
+    nextPositions = new std::vector&lt;int&gt;();
+    currentPositions = new std::vector&lt;int&gt;();
+  }
+  ~Example() {
+    delete nextPositions;
+    delete currentPositions;
+  }
+
+  void compute() {
+    // some code here
+    std::swap(nextPositions, currentPositions);
+    // some other code here
+  }
+
+private:
+  std::vector&lt;int&gt;* nextPositions;
+  std::vector&lt;int&gt;* currentPositions;
+};
+</code></pre></div></div>
+
+<p>Before ARC the objective-C code was very similar and perfectly valid:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// headers
+@interface Example : NSObject {
+  NSMutableArray* nextPositions;
+  NSMutableArray* currentPositions;
+}
+-(void) compute;
+@end
+
+// implementation
+@implementation Example
+-(id) init {
+  self = [super init];
+  if (!self)
+    return nil;
+  nextPositions = [[NSMutableArray alloc] init];
+  currentPositions = [[NSMutableArray alloc] init];
+  return self;
+}
+
+-(void) dealloc {
+  [super dealloc];
+  [nextPositions release];
+  [currentPositions release];
+}
+
+-(void) compute
+{
+  // some processing stuff here
+  NSMutableArray* tmp = nextPositions;
+  nextPositions = currentPositions;
+  currentPositions = tmp;
+  // some processing stuff here
+}
+@end
+</code></pre></div></div>
+
+<p>The semantics are very clear, it is exactly the same as in C++.</p>
+
+<p>So when you start using ARC you tend to do exactly the same thing with less
+code, and you just delete the dealloc method:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// headers
+@interface Example : NSObject {
+  NSMutableArray* nextPositions;
+  NSMutableArray* currentPositions;
+}
+-(void) compute;
+@end
+
+// implementation
+@implementation Example
+-(id) init {
+  self = [super init];
+  if (!self)
+    return nil;
+  nextPositions = [[NSMutableArray alloc] init];
+  currentPositions = [[NSMutableArray alloc] init];
+  return self;
+}
+
+-(void) compute {
+  // some processing stuff here
+  NSMutableArray* tmp = nextPositions;
+  nextPositions = currentPositions;
+  // Wrong, at that step this is too late! nextPositions was deallocated
+  currentPositions = tmp;
+  // some processing stuff here
+}
+@end
+</code></pre></div></div>
+
+<p>The error does not come from a missing strong attribute, because instance
+variables are strong by default. The problem is that ARC does not generate
+code in the variable assignation. You should explicitely add properties and
+use “self.variableName” notation like in the next example. I would encourage
+ARC designers to read this excellent article by Joel Spolsky <a href="http://www.joelonsoftware.com/articles/Wrong.html">“Making Wrong
+Code Look Wrong”</a>. This ARC
+usage is a perfect example of wrong code that looks perfect but leads me to
+the conclusion that ARC is not trustworthy.</p>
+
+<p>Here is the correct version:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// headers
+@interface Example : NSObject {
+  NSMutableArray* nextPositions;
+  NSMutableArray* currentPositions;
+}
+-(void) compute;
+@property (strong, nonatomic) NSMutableArray* nextPositions;
+@property (strong, nonatomic) NSMutableArray* currentPositions;
+@end
+
+// implementation
+@implementation Example
+-(id) init {
+  self = [super init];
+  if (!self)
+    return nil;
+  nextPositions = [[NSMutableArray alloc] init];
+  currentPositions = [[NSMutableArray alloc] init];
+  return self;
+}
+
+-(void) compute {
+  // some processing stuff here
+  NSMutableArray* tmp = self.nextPositions;
+  self.nextPositions = self.currentPositions;
+  self.currentPositions = tmp;
+  // some processing stuff here
+}
+@synthesize nextPositions;
+@synthesize currentPositions;
+@end
+</code></pre></div></div>
+
+<p>I am surprised Apple hasn’t corrected that flaw yet. This is a major issue as
+ARC does not generate code for variable affectation like it does for
+properties (if one of you reads this post and has a complete explanation,
+please tell me!):</p>
+
+<ul>
+  <li>Is it because of a performance issue? I would prefer to have no ARC at all than to see such a behavior.</li>
+  <li>Is this case too complex to be handled? The problem is it undermines ARC’s utility and might get stuck at the prototype stage.</li>
+</ul>
+
+<p>To me, this is a perfect example of a technology driven product. The engineers
+know their product so well that they forget to step back and look at it with a
+fresh eye to analyse the full complexity of their system.</p>
+
+<p>And that leaves me with two important lessons we’ll try to apply to our
+products:</p>
+
+<ul>
+  <li>Always organize user tests, even when your users are developers themselves!</li>
+  <li>Always keep a fresh eye when trying to simplify a product (this one may prove particularly difficult!)</li>
+</ul>
+
+<p>I hope you’ll tell us when we will (inevitably) break these rules!</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

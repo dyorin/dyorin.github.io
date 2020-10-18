@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Keeping Data in your Search Engine Up-to-Date</h1>
+</header>
+
+<span class="time">09 Jul 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>When we developed the first version of Algolia Search, we put a lot of effort
+into developing a data update API. It worked like this: You could send us a
+modified version of your data as soon as the change appeared, even if it
+concerned only a specific part of a record. For example, this batch of
+information could be the updated price or number of reviews, and we would only
+update this specific attribute in your index.</p>
+
+<p>However, this initial plan did not take into account that most of our big
+customers would not benefit from this API due to their existing
+infrastructure. If you had not planned to catch all updates in your
+architecture, or if you were not using a framework like Ruby on Rails, it
+could be very difficult to even have a notification for any of these updates.
+The solution in this case was to use a batch update on a regular basis. It was
+a good method to use if you didn’t want to change a single line of code in
+your existing infrastructure, but the batch update was far from a cure-all.</p>
+
+<h2 id="the-problem-of-batch-update">The problem of batch update</h2>
+
+<p>There are two main ways to perform a batch update on a regular basis:</p>
+
+<ol>
+  <li>Scan your database and update all objects. This method is good if you have no delete operation, but if some data are removed from your database, you will need to perform an extra check to handle delete, which can be very slow.</li>
+  <li>Clear the content of the index and import all your objects. With this method, you ensure that your index is well synchronized with your database. However, if you receive queries during the import, you will return partial results.  If interrupted, the whole rescan could break your relevance or your service.</li>
+</ol>
+
+<p>So the two approaches are somewhat buggy and dangerous.</p>
+
+<h2 id="another-approach-build-a-new-index-with-another-name">Another approach: build a new index with another name</h2>
+
+<p>Since our API allows the creation of a new index with a different name, you
+could have made your batch import in a new index. Afterward, you would just
+need to update your front end to send queries to this new index.</p>
+
+<p>Since all indexing jobs are done asynchronously, we first need to check that
+an indexing job is finished. In order to do that, we return an integer (called
+TaskID) that allows you to check if an update job is applied. Thus, you just
+have to use the API to check that the job is indexed.</p>
+
+<p>But then a problem arises with mobile applications: You cannot change the
+index name of an application as easily, since most of the time, it is a
+constant in the application code. And even for a website, it means that the
+batch will need to inform your frontend that the index name is different. This
+can be complex.</p>
+
+<h2 id="the-elegant-solution-move-operation">The elegant solution: move operation</h2>
+
+<p>To solve these problems, we implemented a command that is well known on file
+systems: <strong>move</strong>. You can move your new index on the old one, and this will
+atomically update the content of the old index with the content of the new
+one. With this new approach, you can solve all the previous update problems
+with one simple procedure. Here’s how you would update an index called
+“MyIndex”:</p>
+
+<ol>
+  <li>Initialize an index “MyIndex.tmp”</li>
+  <li>Scan your database and import all your data in “MyIndex.tmp”</li>
+  <li>Move “MyIndex.tmp in “MyIndex”</li>
+</ol>
+
+<p>You don’t have to do any modification on your backend to catch modifications,
+nor do you need to change the index name on the frontend. Even better, you
+don’t need to check the indexing status with our TaskID system since the
+“move” operation will simply be queued after all “adds”. All queries will go
+to the new index when it is ready.</p>
+
+<h2 id="the-beauty-of-the-move-command">The beauty of the move command</h2>
+
+<p>This command is so elegant that even customers who had been sending us
+realtime updates via our updates API have decided to use this batch update on
+a regular basis. The move command is a good way to ensure that there are no
+bugs in your update code, nor divergence between your database and Algolia.</p>
+
+<p>This operation is supported in our twelve API Clients. We go even further in
+our Ruby on Rails integration: You need only use the ’reindex’ command
+(introduced in 1.10.5) to automatically build a new temporary index and move
+it on top of the existing one.</p>
+
+<p>The move command is an example of how we try to simplify the life of
+developers. If you see any other way we can help you, let us know and we’ll do
+our best to remove your pain!</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/07/09/keeping-data-in-your-search-engine-up-to-date.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/06/05/popular-misperceptions-search-service.html">&laquo; Common Misperceptions about Search as a Service</a>
+  
+  
+    <a class="next" href="/2014/07/11/deploying-algolia-search-2-million-products.html">Deploying Algolia to Search on more than 2 Million Products &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>When we developed the first version of Algolia Search, we put a lot of effort
+into developing a data update API. It worked like this: You could send us a
+modified version of your data as soon as the change appeared, even if it
+concerned only a specific part of a record. For example, this batch of
+information could be the updated price or number of reviews, and we would only
+update this specific attribute in your index.</p>
+
+<p>However, this initial plan did not take into account that most of our big
+customers would not benefit from this API due to their existing
+infrastructure. If you had not planned to catch all updates in your
+architecture, or if you were not using a framework like Ruby on Rails, it
+could be very difficult to even have a notification for any of these updates.
+The solution in this case was to use a batch update on a regular basis. It was
+a good method to use if you didn’t want to change a single line of code in
+your existing infrastructure, but the batch update was far from a cure-all.</p>
+
+<h2 id="the-problem-of-batch-update">The problem of batch update</h2>
+
+<p>There are two main ways to perform a batch update on a regular basis:</p>
+
+<ol>
+  <li>Scan your database and update all objects. This method is good if you have no delete operation, but if some data are removed from your database, you will need to perform an extra check to handle delete, which can be very slow.</li>
+  <li>Clear the content of the index and import all your objects. With this method, you ensure that your index is well synchronized with your database. However, if you receive queries during the import, you will return partial results.  If interrupted, the whole rescan could break your relevance or your service.</li>
+</ol>
+
+<p>So the two approaches are somewhat buggy and dangerous.</p>
+
+<h2 id="another-approach-build-a-new-index-with-another-name">Another approach: build a new index with another name</h2>
+
+<p>Since our API allows the creation of a new index with a different name, you
+could have made your batch import in a new index. Afterward, you would just
+need to update your front end to send queries to this new index.</p>
+
+<p>Since all indexing jobs are done asynchronously, we first need to check that
+an indexing job is finished. In order to do that, we return an integer (called
+TaskID) that allows you to check if an update job is applied. Thus, you just
+have to use the API to check that the job is indexed.</p>
+
+<p>But then a problem arises with mobile applications: You cannot change the
+index name of an application as easily, since most of the time, it is a
+constant in the application code. And even for a website, it means that the
+batch will need to inform your frontend that the index name is different. This
+can be complex.</p>
+
+<h2 id="the-elegant-solution-move-operation">The elegant solution: move operation</h2>
+
+<p>To solve these problems, we implemented a command that is well known on file
+systems: <strong>move</strong>. You can move your new index on the old one, and this will
+atomically update the content of the old index with the content of the new
+one. With this new approach, you can solve all the previous update problems
+with one simple procedure. Here’s how you would update an index called
+“MyIndex”:</p>
+
+<ol>
+  <li>Initialize an index “MyIndex.tmp”</li>
+  <li>Scan your database and import all your data in “MyIndex.tmp”</li>
+  <li>Move “MyIndex.tmp in “MyIndex”</li>
+</ol>
+
+<p>You don’t have to do any modification on your backend to catch modifications,
+nor do you need to change the index name on the frontend. Even better, you
+don’t need to check the indexing status with our TaskID system since the
+“move” operation will simply be queued after all “adds”. All queries will go
+to the new index when it is ready.</p>
+
+<h2 id="the-beauty-of-the-move-command">The beauty of the move command</h2>
+
+<p>This command is so elegant that even customers who had been sending us
+realtime updates via our updates API have decided to use this batch update on
+a regular basis. The move command is a good way to ensure that there are no
+bugs in your update code, nor divergence between your database and Algolia.</p>
+
+<p>This operation is supported in our twelve API Clients. We go even further in
+our Ruby on Rails integration: You need only use the ’reindex’ command
+(introduced in 1.10.5) to automatically build a new temporary index and move
+it on top of the existing one.</p>
+
+<p>The move command is an example of how we try to simplify the life of
+developers. If you see any other way we can help you, let us know and we’ll do
+our best to remove your pain!</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

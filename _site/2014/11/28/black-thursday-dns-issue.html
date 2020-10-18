@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Black Thursday DNS issue</h1>
+</header>
+
+<span class="time">28 Nov 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>Today we had a severe DNS issue that impacted some of our users during a total
+of 5 hours. Although most of our customers were not impacted, for some of them
+search simply went down. This event and its details deserved to be fully
+disclosed.</p>
+
+<h2 id="the-context">The context</h2>
+
+<p>Up until recently, we were using Amazon Route 53 for our DNS routing needs.
+When we started to design our Distributed Search Network
+(<a href="https://www.algolia.com/dsn)">algolia.com/dsn</a> a few months ago, we quickly
+realized that our needs were out of Route 53’s scope: we needed a custom
+routing per user and the two options of Route 53 simply didn’t work:</p>
+
+<ul>
+  <li>Latency-based routing is limited to the 9 regions of AWS and we have 12;</li>
+  <li>With geography-based routing you need to indicate country per country how you want to resolve the IP.</li>
+</ul>
+
+<p>This is a tedious process for a not even good solution as route 53 does not
+support EDNS right now.</p>
+
+<p>So we started to look for new DNS options. Choosing the best DNS provider is
+not something you do overnight. It took us months to benchmark several vendors
+and find the right one: NSOne. The <a href="https://nsone.net/2014/03/nsone-filter-chain-quick-primer/">filter chain feature of
+NSOne</a> was a
+perfect fit for our use case and the NSOne team was great in understanding our
+needs and even went the extra mile for us by building a specific module,
+allowing better performance.</p>
+
+<p>Something we also discovered during this benchmark was that the algolia.io
+domain was not good for performance compared to algolia.net, as there are far
+more DNS servers in the .net anycast network than in the .io one. The NSOne
+team offered us a smart solution based on linked domain, so we wouldn’t have
+to maintain two zones ourselves.</p>
+
+<h2 id="the-migration">The migration</h2>
+
+<p>The goal of the migration was to move from Route 53 to NSOne. For several
+weeks we have been working on importing the records in NSOne and making sure
+Route 53 and NSOne were synchronized. Our initial tests revealed some issues
+but after a few days of continuous updates without any difference between
+Route 53 and NSOne, we started to be confident about our synchronization and
+started the migration of the <a href="https://www.algolia.com/demos">demos of our
+website</a> to make them target the new
+algolia.net domain. We tested the performance and resolution from all NSOne
+POP (<a href="https://nsone.net/technology/netw
+ork/">https://nsone.net/technology/network/</a>) to be sure there were no glitches.</p>
+
+<p>These first production tests were successful, synchronization was ok,
+performance and routing were good, so we decided to move the .io domain from
+Route 53 to NSOne as well.</p>
+
+<h2 id="the-d-day">The D-day</h2>
+
+<p>The big issue when changing the DNS is that it is global and involves caching
+logics, making rollbacking complex. With users in 45 countries it is almost
+impossible to find a suitable time for everyone: DNS changes cannot be done
+gradually. We decided to push the update during the night for the US, at 4am
+EST.</p>
+
+<p>We witnessed a quickly rising number of queries targeting NSOne and it’s once
+we reached about 1,000 DNS queries per second that we started to receive our
+first complain about failed DNS resolution. This routing issue was not
+impacting all DNS resolutions but some of them were replying with a NXDOMAIN
+answer, the equivalent of a DNS “404 not found”.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ dig APPID-1.algolia.io`
+; &lt;&lt;&gt;&gt; DiG 9.9.5-4.3-Ubuntu &lt;&lt;&gt;&gt; APPID-1.algolia.io
+;; global options: +cmd
+;; Got answer:
+;; -&gt;&gt;HEADER&lt; ;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 1
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;APPID-1.algolia.io. IN A
+;; AUTHORITY SECTION:
+algolia.io. 45 IN SOA dns1.p03.nsone.net. hostmaster.nsone.net.
+1414873854 43200 7200 1209600 3600
+;; Query time: 24 msec
+;; SERVER: 213.133.100.100#53(213.133.100.100)
+;; WHEN: Thu Nov 27 10:49:33 CET 2014
+;; MSG SIZE rcvd: 115
+</code></pre></div></div>
+
+<p>After double-checking our DNS zone for those specific records, we understood
+it was a NSOne bug related to our custom routing code. We immediately
+rollbacked to Route 53.</p>
+
+<p>The NSOne support was really quick to react and they found the issue pretty
+quickly: the issue only concerned some DNS with EDNS support on the algolia.io
+domain. The algolia.net domain was not impacted, explaining why all the tests
+we’ve done weren’t able to detect the issue before.</p>
+
+<p>Unfortunately, it did not stop here and something very unexpected happened:
+some customers (even not priorly impacted) started to face issues right after
+the rollback to Route 53.</p>
+
+<p>In order to improve performance, the custom Algolia module developed by NSOne
+was doing some translation on our records: APPID-1.algolia.io is translated
+into 1.APPID.algolia.io and then resolved to CNAME for the actual server in
+the cluster serving that customer. The translation of APPID-1.algolia.io to
+1.APPID.algolia.io was done with a TTL of 86400 seconds (1 day). Since these
+zones did not exist in Route 53 before, it was not possible to resolve there
+records anymore. What made the situation even worse was the TTL far exceeding
+the TTL of NS records. Most of the DNS servers flushed their cache for the
+domain, once the nameservers changed. But the remaining ones kept the record
+cached.</p>
+
+<p><strong>TL;DR: Do not forget about IPv6.</strong> As if it was not enough, we eventually discovered something else: our custom DNS module was resolving APPID-X.algolia.io to X.APPID.algolia.io only in a case that there were no direct resolutions to an IP address. This translation worked pretty well as we had all the A records set. But some customers started to report weird resolutions. Normally we resolve APPID-1.algolia.io -&gt; 1.APPID.algolia.io -&gt; servername-1.algolia.io -&gt; IP. Which was completely fine until the moment an IPv6 AAAA request came. Since we did not have AAAA records, the custom filter started to resolve: APPID-1.algolia.io -&gt; 1. APPID.algolia.io -&gt; servername-1.algolia.io -&gt; 1.servername.algolia.io -&gt; nothing.</p>
+
+<p>We were in a bad situation feared by all engineers, this lonely moment when
+you really miss a “purge cache” feature.</p>
+
+<p>Eventually, as soon as we got confirmation of the fix by NSOne, we changed
+again the DNS of algolia.io to NSOne and helped our customers to workaround
+the issue before the cache expiration:</p>
+
+<p>for our customers impacted by the NXDOMAIN issue, a simple migration to the
+algolia.net domain instead of the algolia.io problem fixed the issue;</p>
+
+<p>for those impacted by the Route 53 rollback issue, we created new DNS records
+for them to avoid work-around DNS caches.</p>
+
+<h2 id="conclusion-what-we-learned">Conclusion: what we learned</h2>
+
+<p>This is by far the biggest problem we have encountered since the launch of
+Algolia. Although the first issue was almost impossible to anticipate, we have
+made mistakes and should have handled a few things differently:</p>
+
+<p>DNS is a highly critical component and being the first to use an external
+custom module was not a good idea, even if it improved performance;</p>
+
+<p>Putting more thought into the rollback part of our deployment would have
+helped us anticipate the second issue. For a component as critical as a DNS,
+having a robust rollback process is mandatory, no matter how much work it
+represents and even though such an event is extremely unlikely to happen.</p>
+
+<p>We’re very sorry for this disruption. We wanted to share these technical
+details to shed some light on what happened and what we’ve done in response.
+Thanks for your patience and support.</p>
+
+<p>If you think we missed anything or if you’d like to share your advice on your
+own best practices, your comments are really welcome.</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/11/28/black-thursday-dns-issue.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/11/14/jadopado-delivers-instasearch-mobile-web-powered-algolia.html">&laquo; Jadopado delivers instasearch for mobile and web powered by Algolia</a>
+  
+  
+    <a class="next" href="/2014/12/01/fanfootage-solving-search-problem-algolia.html">FanFootage: Solving the Search problem with Algolia &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>Today we had a severe DNS issue that impacted some of our users during a total
+of 5 hours. Although most of our customers were not impacted, for some of them
+search simply went down. This event and its details deserved to be fully
+disclosed.</p>
+
+<h2 id="the-context">The context</h2>
+
+<p>Up until recently, we were using Amazon Route 53 for our DNS routing needs.
+When we started to design our Distributed Search Network
+(<a href="https://www.algolia.com/dsn)">algolia.com/dsn</a> a few months ago, we quickly
+realized that our needs were out of Route 53’s scope: we needed a custom
+routing per user and the two options of Route 53 simply didn’t work:</p>
+
+<ul>
+  <li>Latency-based routing is limited to the 9 regions of AWS and we have 12;</li>
+  <li>With geography-based routing you need to indicate country per country how you want to resolve the IP.</li>
+</ul>
+
+<p>This is a tedious process for a not even good solution as route 53 does not
+support EDNS right now.</p>
+
+<p>So we started to look for new DNS options. Choosing the best DNS provider is
+not something you do overnight. It took us months to benchmark several vendors
+and find the right one: NSOne. The <a href="https://nsone.net/2014/03/nsone-filter-chain-quick-primer/">filter chain feature of
+NSOne</a> was a
+perfect fit for our use case and the NSOne team was great in understanding our
+needs and even went the extra mile for us by building a specific module,
+allowing better performance.</p>
+
+<p>Something we also discovered during this benchmark was that the algolia.io
+domain was not good for performance compared to algolia.net, as there are far
+more DNS servers in the .net anycast network than in the .io one. The NSOne
+team offered us a smart solution based on linked domain, so we wouldn’t have
+to maintain two zones ourselves.</p>
+
+<h2 id="the-migration">The migration</h2>
+
+<p>The goal of the migration was to move from Route 53 to NSOne. For several
+weeks we have been working on importing the records in NSOne and making sure
+Route 53 and NSOne were synchronized. Our initial tests revealed some issues
+but after a few days of continuous updates without any difference between
+Route 53 and NSOne, we started to be confident about our synchronization and
+started the migration of the <a href="https://www.algolia.com/demos">demos of our
+website</a> to make them target the new
+algolia.net domain. We tested the performance and resolution from all NSOne
+POP (<a href="https://nsone.net/technology/netw
+ork/">https://nsone.net/technology/network/</a>) to be sure there were no glitches.</p>
+
+<p>These first production tests were successful, synchronization was ok,
+performance and routing were good, so we decided to move the .io domain from
+Route 53 to NSOne as well.</p>
+
+<h2 id="the-d-day">The D-day</h2>
+
+<p>The big issue when changing the DNS is that it is global and involves caching
+logics, making rollbacking complex. With users in 45 countries it is almost
+impossible to find a suitable time for everyone: DNS changes cannot be done
+gradually. We decided to push the update during the night for the US, at 4am
+EST.</p>
+
+<p>We witnessed a quickly rising number of queries targeting NSOne and it’s once
+we reached about 1,000 DNS queries per second that we started to receive our
+first complain about failed DNS resolution. This routing issue was not
+impacting all DNS resolutions but some of them were replying with a NXDOMAIN
+answer, the equivalent of a DNS “404 not found”.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ dig APPID-1.algolia.io`
+; &lt;&lt;&gt;&gt; DiG 9.9.5-4.3-Ubuntu &lt;&lt;&gt;&gt; APPID-1.algolia.io
+;; global options: +cmd
+;; Got answer:
+;; -&gt;&gt;HEADER&lt; ;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 1
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;APPID-1.algolia.io. IN A
+;; AUTHORITY SECTION:
+algolia.io. 45 IN SOA dns1.p03.nsone.net. hostmaster.nsone.net.
+1414873854 43200 7200 1209600 3600
+;; Query time: 24 msec
+;; SERVER: 213.133.100.100#53(213.133.100.100)
+;; WHEN: Thu Nov 27 10:49:33 CET 2014
+;; MSG SIZE rcvd: 115
+</code></pre></div></div>
+
+<p>After double-checking our DNS zone for those specific records, we understood
+it was a NSOne bug related to our custom routing code. We immediately
+rollbacked to Route 53.</p>
+
+<p>The NSOne support was really quick to react and they found the issue pretty
+quickly: the issue only concerned some DNS with EDNS support on the algolia.io
+domain. The algolia.net domain was not impacted, explaining why all the tests
+we’ve done weren’t able to detect the issue before.</p>
+
+<p>Unfortunately, it did not stop here and something very unexpected happened:
+some customers (even not priorly impacted) started to face issues right after
+the rollback to Route 53.</p>
+
+<p>In order to improve performance, the custom Algolia module developed by NSOne
+was doing some translation on our records: APPID-1.algolia.io is translated
+into 1.APPID.algolia.io and then resolved to CNAME for the actual server in
+the cluster serving that customer. The translation of APPID-1.algolia.io to
+1.APPID.algolia.io was done with a TTL of 86400 seconds (1 day). Since these
+zones did not exist in Route 53 before, it was not possible to resolve there
+records anymore. What made the situation even worse was the TTL far exceeding
+the TTL of NS records. Most of the DNS servers flushed their cache for the
+domain, once the nameservers changed. But the remaining ones kept the record
+cached.</p>
+
+<p><strong>TL;DR: Do not forget about IPv6.</strong> As if it was not enough, we eventually discovered something else: our custom DNS module was resolving APPID-X.algolia.io to X.APPID.algolia.io only in a case that there were no direct resolutions to an IP address. This translation worked pretty well as we had all the A records set. But some customers started to report weird resolutions. Normally we resolve APPID-1.algolia.io -&gt; 1.APPID.algolia.io -&gt; servername-1.algolia.io -&gt; IP. Which was completely fine until the moment an IPv6 AAAA request came. Since we did not have AAAA records, the custom filter started to resolve: APPID-1.algolia.io -&gt; 1. APPID.algolia.io -&gt; servername-1.algolia.io -&gt; 1.servername.algolia.io -&gt; nothing.</p>
+
+<p>We were in a bad situation feared by all engineers, this lonely moment when
+you really miss a “purge cache” feature.</p>
+
+<p>Eventually, as soon as we got confirmation of the fix by NSOne, we changed
+again the DNS of algolia.io to NSOne and helped our customers to workaround
+the issue before the cache expiration:</p>
+
+<p>for our customers impacted by the NXDOMAIN issue, a simple migration to the
+algolia.net domain instead of the algolia.io problem fixed the issue;</p>
+
+<p>for those impacted by the Route 53 rollback issue, we created new DNS records
+for them to avoid work-around DNS caches.</p>
+
+<h2 id="conclusion-what-we-learned">Conclusion: what we learned</h2>
+
+<p>This is by far the biggest problem we have encountered since the launch of
+Algolia. Although the first issue was almost impossible to anticipate, we have
+made mistakes and should have handled a few things differently:</p>
+
+<p>DNS is a highly critical component and being the first to use an external
+custom module was not a good idea, even if it improved performance;</p>
+
+<p>Putting more thought into the rollback part of our deployment would have
+helped us anticipate the second issue. For a component as critical as a DNS,
+having a robust rollback process is mandatory, no matter how much work it
+represents and even though such an event is extremely unlikely to happen.</p>
+
+<p>We’re very sorry for this disruption. We wanted to share these technical
+details to shed some light on what happened and what we’ve done in response.
+Thanks for your patience and support.</p>
+
+<p>If you think we missed anything or if you’d like to share your advice on your
+own best practices, your comments are really welcome.</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

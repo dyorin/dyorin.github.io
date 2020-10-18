@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">C/C++ is still the only way to have high performance on Mobile</h1>
+</header>
+
+<span class="time">24 Jul 2012</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>When it comes to programming languages and performance, you can read all and
+its opposite on the web. It’s definitely a very controversial topic!</p>
+
+<p><strong>[Edit 15-Nov-2012]</strong> I had questions on <a href="http://redd.it/136hny">reddit</a> about the data-structures and algorithms we used. We develop an <a href="http://www.algolia.com">embedded search engine</a> for mobile, and tests were done on our own data-structure that is far more efficient than SQLite or other platform options for this use-case. <strong>[/Edit]</strong></p>
+
+<p>For Algolia the story started when researching an instant suggest algorithm. I
+used Java for two reasons:</p>
+
+<ul>
+  <li><strong>Main reason</strong>: our first client was using Java on Google App Engine</li>
+  <li><strong>Secondary</strong>: at that stage, I was doing a lots of refactoring and Eclipse is very efficient for these tasks</li>
+</ul>
+
+<p>Once our algorithm was designed, I started to optimize performance on a
+desktop computer (core I7 950). For this, I indexed all titles of the English
+version of Wikipedia (4 millions titles). I optimized the Java code mainly by
+reducing the number of allocations. All instant suggest queries were then
+faster than 10ms.</p>
+
+<p>As we planned from the begining to support iOS and Android, I needed to
+optimize for high performance on mobile. I then ported the Java code to
+Android and ended up with a few modifications (we needed to support old
+Android versions which have not a full support of Java SDK).</p>
+
+<p>In order to test performance, I created a small “demo” app: CitiesSuggest, a
+mobile application based on Geonames database to look for a city name. I
+filled the index with all places with a known population. In the end, the
+database contained 270 000 city names.</p>
+
+<p>As could be expected, the resulting application was quite sluggish on my
+Galaxy S2. The worst queries could take more than one second of CPU.</p>
+
+<p>I then applied all possible methods described in the <a href="http://developer.android.com/guide/practices/performance.html">Anroid
+documentation</a>
+and was able to reduce the response time to 700ms for the longest queries.
+This is better but still gives end-users an impression of sluggishness!
+Fortunately, common queries worked well enough to present our very first demos
+at <a href="http://blog.algolia.com/great-discussions-at-leweb12-london/">LeWeb’12 London</a>. I was subsequently able to improve the user experience a lot
+by adding asynchronous support. At that point, we decided to start
+implementing the objective-C version for iOS.</p>
+
+<p>I started a new implementation fully done in objective-C from scratch without
+any premature optimization. I then developed the same CitiesSuggest
+application for iOS. I first got stuck with some basic UI stuff. For example I
+needed to reimplement an UILabel that supports highlighting! The standard
+UILabel does no support this, and other implementations like Three20 just have
+too many dependencies (you can download AlgoliaUILabel on
+<a href="http://github.com/algolia/UILabel">github</a>, I released  the code under Apache
+licence). Once the UI was ready, I could see the actual performance was
+catastrophic! Instant suggest queries were between 200ms and 10 seconds on an
+iPhone 4S!</p>
+
+<p>After profilling, I discovered that 95% of the time was spent in Objective-C
+messaging and ARC. Actually, I have millions of calls to very small methods
+with 1 or 2 lines of code, and I found a very good explanation in the internal
+of objc_msgSend (mainly on <a href="http://www.mikeash.com/pyblog/friday-qa-2009-03-20-objective-c-messaging.html)">mikeask.com</a>. There is in fact a hash table
+lookup behind objc_msgSend! This explains most of my performance problems.</p>
+
+<p>To fix these problems, I started to replace all this low level objective-C
+implementation by a C++ implementation with inlined methods. Eventually, I
+finished with Objective-C code for high level classes while all the core was
+C++.</p>
+
+<p>This change has dramatically improved performance with instant-search queries
+between 2ms and 90ms on a iPhone 4S. I struggled to find complex enough
+queries to reach 90ms! This resulted in a very nice user experience with a
+remarkably slick demo :)</p>
+
+<p>After this succes, I decided to use the same C++ code on Android with Android
+NDK. With this approach I reduced our maximum query time from 700ms to 80ms on
+a Galaxy S2. But I was really disappointed by the Android display, as I did
+not reach the same level of interactive experience that I had with iOS. The
+display of results stays slower on Android, probably because I did not spend
+enough time to optimize this part.</p>
+
+<p>In the end, I lost a lot of time with Java and Objective-C trying to optimize
+code when the real solution was to use C/C++. I am fully convinced that it is
+just not possible to reach the same speed with Objective-C only or Java only.</p>
+
+<p>And there is also another good property with C++ code: Blackberry supports
+C++, and there is large chance that Windows Phone 8 SDK will support C++ when
+released in a few weeks. Actually, I do not see any other alternative than
+C/C++ when you are looking for performance on mobile devices, which is our
+case :)</p>
+
+<p>I hope this article will prevent you from spending as much time on
+Java/Objective-C optimizations as I did.</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2012/07/24/need-performance-on-mobile-use-c-cpp.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2012/07/12/ios-when-arc-is-a-bad-idea.html">&laquo; iOS: When Automatic Reference Counting is a Bad Idea</a>
+  
+  
+    <a class="next" href="/2012/08/01/free-marketing-wwdc2012.html">Free marketing @ WWDC 2012! &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>When it comes to programming languages and performance, you can read all and
+its opposite on the web. It’s definitely a very controversial topic!</p>
+
+<p><strong>[Edit 15-Nov-2012]</strong> I had questions on <a href="http://redd.it/136hny">reddit</a> about the data-structures and algorithms we used. We develop an <a href="http://www.algolia.com">embedded search engine</a> for mobile, and tests were done on our own data-structure that is far more efficient than SQLite or other platform options for this use-case. <strong>[/Edit]</strong></p>
+
+<p>For Algolia the story started when researching an instant suggest algorithm. I
+used Java for two reasons:</p>
+
+<ul>
+  <li><strong>Main reason</strong>: our first client was using Java on Google App Engine</li>
+  <li><strong>Secondary</strong>: at that stage, I was doing a lots of refactoring and Eclipse is very efficient for these tasks</li>
+</ul>
+
+<p>Once our algorithm was designed, I started to optimize performance on a
+desktop computer (core I7 950). For this, I indexed all titles of the English
+version of Wikipedia (4 millions titles). I optimized the Java code mainly by
+reducing the number of allocations. All instant suggest queries were then
+faster than 10ms.</p>
+
+<p>As we planned from the begining to support iOS and Android, I needed to
+optimize for high performance on mobile. I then ported the Java code to
+Android and ended up with a few modifications (we needed to support old
+Android versions which have not a full support of Java SDK).</p>
+
+<p>In order to test performance, I created a small “demo” app: CitiesSuggest, a
+mobile application based on Geonames database to look for a city name. I
+filled the index with all places with a known population. In the end, the
+database contained 270 000 city names.</p>
+
+<p>As could be expected, the resulting application was quite sluggish on my
+Galaxy S2. The worst queries could take more than one second of CPU.</p>
+
+<p>I then applied all possible methods described in the <a href="http://developer.android.com/guide/practices/performance.html">Anroid
+documentation</a>
+and was able to reduce the response time to 700ms for the longest queries.
+This is better but still gives end-users an impression of sluggishness!
+Fortunately, common queries worked well enough to present our very first demos
+at <a href="http://blog.algolia.com/great-discussions-at-leweb12-london/">LeWeb’12 London</a>. I was subsequently able to improve the user experience a lot
+by adding asynchronous support. At that point, we decided to start
+implementing the objective-C version for iOS.</p>
+
+<p>I started a new implementation fully done in objective-C from scratch without
+any premature optimization. I then developed the same CitiesSuggest
+application for iOS. I first got stuck with some basic UI stuff. For example I
+needed to reimplement an UILabel that supports highlighting! The standard
+UILabel does no support this, and other implementations like Three20 just have
+too many dependencies (you can download AlgoliaUILabel on
+<a href="http://github.com/algolia/UILabel">github</a>, I released  the code under Apache
+licence). Once the UI was ready, I could see the actual performance was
+catastrophic! Instant suggest queries were between 200ms and 10 seconds on an
+iPhone 4S!</p>
+
+<p>After profilling, I discovered that 95% of the time was spent in Objective-C
+messaging and ARC. Actually, I have millions of calls to very small methods
+with 1 or 2 lines of code, and I found a very good explanation in the internal
+of objc_msgSend (mainly on <a href="http://www.mikeash.com/pyblog/friday-qa-2009-03-20-objective-c-messaging.html)">mikeask.com</a>. There is in fact a hash table
+lookup behind objc_msgSend! This explains most of my performance problems.</p>
+
+<p>To fix these problems, I started to replace all this low level objective-C
+implementation by a C++ implementation with inlined methods. Eventually, I
+finished with Objective-C code for high level classes while all the core was
+C++.</p>
+
+<p>This change has dramatically improved performance with instant-search queries
+between 2ms and 90ms on a iPhone 4S. I struggled to find complex enough
+queries to reach 90ms! This resulted in a very nice user experience with a
+remarkably slick demo :)</p>
+
+<p>After this succes, I decided to use the same C++ code on Android with Android
+NDK. With this approach I reduced our maximum query time from 700ms to 80ms on
+a Galaxy S2. But I was really disappointed by the Android display, as I did
+not reach the same level of interactive experience that I had with iOS. The
+display of results stays slower on Android, probably because I did not spend
+enough time to optimize this part.</p>
+
+<p>In the end, I lost a lot of time with Java and Objective-C trying to optimize
+code when the real solution was to use C/C++. I am fully convinced that it is
+just not possible to reach the same speed with Objective-C only or Java only.</p>
+
+<p>And there is also another good property with C++ code: Blackberry supports
+C++, and there is large chance that Windows Phone 8 SDK will support C++ when
+released in a few weeks. Actually, I do not see any other alternative than
+C/C++ when you are looking for performance on mobile devices, which is our
+case :)</p>
+
+<p>I hope this article will prevent you from spending as much time on
+Java/Objective-C optimizations as I did.</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

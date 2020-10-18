@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Github Awesome Autocomplete browser extension for Chrome and Firefox</h1>
+</header>
+
+<span class="time">23 Dec 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>By working every day on building the best search engine, we’ve become obsessed
+with our own search experience on the websites and mobile applications we use.</p>
+
+<p>We’re git addicts and love using GitHub to store every single idea or project
+we work on. We use it both for our private and public repositories (<a href="https://www.algolia.com/doc/apiclients">12 API
+clients</a>, <a href="https://github.com/algolia/hn-search">HN
+Search</a> or various
+<a href="https://github.com/algolia/instant-search-demo">d</a>
+<a href="https://github.com/algolia/facebook-search">e</a> <a href="https://github.com/algolia/linkedin-search">m</a> <a href="https://github.com/algolia/meetup-search">o</a>
+<a href="https://github.com/algolia/twitter-search)">s</a>. We use every day its search
+function and we decided to re-build it the way we thought it should be.  We’re
+proud to share it with the community via this <a href="https://chrome.google.com/webstore/detail/github-awesome-autocomple/djkfdjpoelphhdclfjhnffmnlnoknfnd">Chrome
+extension</a>. Our Github Awesome Autocomplete
+enables a seamless and fast access to GitHub resources via an as-you-type
+search functionality.</p>
+
+<h2 id="install-your-christmas-gift-now">Install your Christmas Gift now!</h2>
+
+<p><a href="https://chrome.google.com/webstore/detail/github-awesome-
+autocomple/djkfdjpoelphhdclfjhnffmnlnoknfnd"><img src="./assets/ChromeWebStore_BadgeWBorder_v2_206x58.png" alt="Github Awesome Autocomplete Algolia Search" /></a></p>
+
+<h2 id="features">Features</h2>
+
+<p>The Chrome extension replaces GitHub’s search bar and add autocomplete
+capabilities on:</p>
+
+<ul>
+  <li>
+    <p>top public repositories</p>
+  </li>
+  <li>
+    <p>last active users</p>
+  </li>
+  <li>
+    <p>your own private repositories (this one is done locally in JavaScript without Algolia: the list of private repositories remains locally in your browser)</p>
+  </li>
+</ul>
+
+<p><img src="./assets/hackpad.com_Y3thzadEtdY_p.233467_1419338581444_capture.gif" alt="" /></p>
+
+<h2 id="howdoes-itwork">How does it work?</h2>
+
+<p>We continuously retrieve the most watched repositories and the last active
+users using <a href="http://www.githubarchive.org/">GitHub Archive</a> dataset. Users and
+repositories are stored in 2 Algolia indices: users and repositories. The
+queries are performed using <a href="https://github.com/algolia/algoliasearch-client-js">our JavaScript API
+client</a> and the
+autocomplete menu is based on Twitter’s
+<a href="http://twitter.github.io/typeahead.js/">typeahead.js</a> library.</p>
+
+<p>The underlying Algolia account is replicated in 6 regions using our
+<a href="https://www.algolia.com/dsn">DSN</a> feature, answering every query in 50-100ms
+wherever you are (network latency included!). Regions include US West, US
+East, Europe, Singapore, Australia &amp; India.</p>
+
+<h2 id="exporting-the-records-from-github-archive">Exporting the records from GitHub Archive</h2>
+
+<p>We used GitHub’s Archive dataset to export top repositories and last active
+users using Google’s BigQuery:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>;; export repositories
+SELECT
+  a.repository_name as name,
+  a.repository_owner as owner,
+  a.repository_description as description,
+  a.repository_organization as organization,
+  a.repository_watchers AS watchers,
+  a.repository_forks AS forks,
+  a.repository_language as language
+FROM [githubarchive:github.timeline] a
+JOIN EACH
+  (
+     SELECT MAX(created_at) as max_created, repository_url
+     FROM [githubarchive:github.timeline]
+     GROUP EACH BY repository_url
+  ) b
+  ON 
+  b.max_created = a.created_at and
+  b.repository_url = a.repository_url
+
+
+;; export users
+SELECT
+  a.actor_attributes_login as login,
+  a.actor_attributes_name as name,
+  a.actor_attributes_company as company,
+  a.actor_attributes_location as location,
+  a.actor_attributes_blog AS blog,
+  a.actor_attributes_email AS email
+FROM [githubarchive:github.timeline] a
+JOIN EACH
+  (
+     SELECT MAX(created_at) as max_created, actor_attributes_login
+     FROM [githubarchive:github.timeline]
+     GROUP EACH BY actor_attributes_login
+  ) b
+  ON 
+  b.max_created = a.created_at and
+  b.actor_attributes_login = a.actor_attributes_login
+</code></pre></div></div>
+
+<h2 id="configuring-algolia-indices">Configuring Algolia indices</h2>
+
+<p>Here are the 2 index configurations we used to build the search:</p>
+
+<h3 id="repositories">Repositories</h3>
+
+<p><img src="./assets/hackpad.com_Y3thzadEtdY_p.233467_1419338775543_Screen%20Shot%202014-12-23%20at%2013.46.04.png" alt="" /></p>
+
+<h3 id="users">Users</h3>
+
+<p><img src="./assets/hackpad.com_Y3thzadEtdY_p.233467_1419338826276_Screen%20Shot%202014-12-23%20at%2013.45.54.png" alt="" /></p>
+
+<p>###</p>
+
+<h2 id="want-to-contribute">Want to contribute?</h2>
+
+<p>It’s open-source and we’ll be happy to get your feedback! Just use <a href="https://github.com/algolia/github-awesome-autocomplete/issues">GitHub’s
+issues</a> to
+report any idea you have in mind. We also love pull-requests :)</p>
+
+<p>Source code: <a href="https://github.com/algolia/github-awesome-autocomplete">https://github.com/algolia/github-awesome-
+autocomplete</a></p>
+
+<p>Install it now: [Github Awesome Autocomplete on Google Chrome Store
+<a href="https://chrome.google.com/webstore/detail/github-awesome-autocomple/djkfdjpoelphhdclfjhnffmnlnoknfnd">FREE</a>]</p>
+
+<h2 id="or-just-want-to-add-an-instant-search-in-yourwebsite-application">Or just want to add an instant search in your website / application?</h2>
+
+<p>Feel free to create a 14-days FREE trial at
+<a href="http://www.algolia.com/">http://www.algolia.com</a> and follow one of our step
+by step tutorials at
+<a href="https://www.algolia.com/doc/tutorials">https://www.algolia.com/doc/tutorials</a></p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/12/23/christmas-gifthub-awesome-autocomplete.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/12/01/search-strategic-engage-visitors.html">&laquo; Search inside websites and mobile apps is strategic to engage visitors - Part 1</a>
+  
+  
+    <a class="next" href="/2015/01/12/try-new-experimental-version-hn-search.html">New experimental version of Hacker News Search built with Algolia &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>By working every day on building the best search engine, we’ve become obsessed
+with our own search experience on the websites and mobile applications we use.</p>
+
+<p>We’re git addicts and love using GitHub to store every single idea or project
+we work on. We use it both for our private and public repositories (<a href="https://www.algolia.com/doc/apiclients">12 API
+clients</a>, <a href="https://github.com/algolia/hn-search">HN
+Search</a> or various
+<a href="https://github.com/algolia/instant-search-demo">d</a>
+<a href="https://github.com/algolia/facebook-search">e</a> <a href="https://github.com/algolia/linkedin-search">m</a> <a href="https://github.com/algolia/meetup-search">o</a>
+<a href="https://github.com/algolia/twitter-search)">s</a>. We use every day its search
+function and we decided to re-build it the way we thought it should be.  We’re
+proud to share it with the community via this <a href="https://chrome.google.com/webstore/detail/github-awesome-autocomple/djkfdjpoelphhdclfjhnffmnlnoknfnd">Chrome
+extension</a>. Our Github Awesome Autocomplete
+enables a seamless and fast access to GitHub resources via an as-you-type
+search functionality.</p>
+
+<h2 id="install-your-christmas-gift-now">Install your Christmas Gift now!</h2>
+
+<p><a href="https://chrome.google.com/webstore/detail/github-awesome-
+autocomple/djkfdjpoelphhdclfjhnffmnlnoknfnd"><img src="./assets/ChromeWebStore_BadgeWBorder_v2_206x58.png" alt="Github Awesome Autocomplete Algolia Search" /></a></p>
+
+<h2 id="features">Features</h2>
+
+<p>The Chrome extension replaces GitHub’s search bar and add autocomplete
+capabilities on:</p>
+
+<ul>
+  <li>
+    <p>top public repositories</p>
+  </li>
+  <li>
+    <p>last active users</p>
+  </li>
+  <li>
+    <p>your own private repositories (this one is done locally in JavaScript without Algolia: the list of private repositories remains locally in your browser)</p>
+  </li>
+</ul>
+
+<p><img src="./assets/hackpad.com_Y3thzadEtdY_p.233467_1419338581444_capture.gif" alt="" /></p>
+
+<h2 id="howdoes-itwork">How does it work?</h2>
+
+<p>We continuously retrieve the most watched repositories and the last active
+users using <a href="http://www.githubarchive.org/">GitHub Archive</a> dataset. Users and
+repositories are stored in 2 Algolia indices: users and repositories. The
+queries are performed using <a href="https://github.com/algolia/algoliasearch-client-js">our JavaScript API
+client</a> and the
+autocomplete menu is based on Twitter’s
+<a href="http://twitter.github.io/typeahead.js/">typeahead.js</a> library.</p>
+
+<p>The underlying Algolia account is replicated in 6 regions using our
+<a href="https://www.algolia.com/dsn">DSN</a> feature, answering every query in 50-100ms
+wherever you are (network latency included!). Regions include US West, US
+East, Europe, Singapore, Australia &amp; India.</p>
+
+<h2 id="exporting-the-records-from-github-archive">Exporting the records from GitHub Archive</h2>
+
+<p>We used GitHub’s Archive dataset to export top repositories and last active
+users using Google’s BigQuery:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>;; export repositories
+SELECT
+  a.repository_name as name,
+  a.repository_owner as owner,
+  a.repository_description as description,
+  a.repository_organization as organization,
+  a.repository_watchers AS watchers,
+  a.repository_forks AS forks,
+  a.repository_language as language
+FROM [githubarchive:github.timeline] a
+JOIN EACH
+  (
+     SELECT MAX(created_at) as max_created, repository_url
+     FROM [githubarchive:github.timeline]
+     GROUP EACH BY repository_url
+  ) b
+  ON 
+  b.max_created = a.created_at and
+  b.repository_url = a.repository_url
+
+
+;; export users
+SELECT
+  a.actor_attributes_login as login,
+  a.actor_attributes_name as name,
+  a.actor_attributes_company as company,
+  a.actor_attributes_location as location,
+  a.actor_attributes_blog AS blog,
+  a.actor_attributes_email AS email
+FROM [githubarchive:github.timeline] a
+JOIN EACH
+  (
+     SELECT MAX(created_at) as max_created, actor_attributes_login
+     FROM [githubarchive:github.timeline]
+     GROUP EACH BY actor_attributes_login
+  ) b
+  ON 
+  b.max_created = a.created_at and
+  b.actor_attributes_login = a.actor_attributes_login
+</code></pre></div></div>
+
+<h2 id="configuring-algolia-indices">Configuring Algolia indices</h2>
+
+<p>Here are the 2 index configurations we used to build the search:</p>
+
+<h3 id="repositories">Repositories</h3>
+
+<p><img src="./assets/hackpad.com_Y3thzadEtdY_p.233467_1419338775543_Screen%20Shot%202014-12-23%20at%2013.46.04.png" alt="" /></p>
+
+<h3 id="users">Users</h3>
+
+<p><img src="./assets/hackpad.com_Y3thzadEtdY_p.233467_1419338826276_Screen%20Shot%202014-12-23%20at%2013.45.54.png" alt="" /></p>
+
+<p>###</p>
+
+<h2 id="want-to-contribute">Want to contribute?</h2>
+
+<p>It’s open-source and we’ll be happy to get your feedback! Just use <a href="https://github.com/algolia/github-awesome-autocomplete/issues">GitHub’s
+issues</a> to
+report any idea you have in mind. We also love pull-requests :)</p>
+
+<p>Source code: <a href="https://github.com/algolia/github-awesome-autocomplete">https://github.com/algolia/github-awesome-
+autocomplete</a></p>
+
+<p>Install it now: [Github Awesome Autocomplete on Google Chrome Store
+<a href="https://chrome.google.com/webstore/detail/github-awesome-autocomple/djkfdjpoelphhdclfjhnffmnlnoknfnd">FREE</a>]</p>
+
+<h2 id="or-just-want-to-add-an-instant-search-in-yourwebsite-application">Or just want to add an instant search in your website / application?</h2>
+
+<p>Feel free to create a 14-days FREE trial at
+<a href="http://www.algolia.com/">http://www.algolia.com</a> and follow one of our step
+by step tutorials at
+<a href="https://www.algolia.com/doc/tutorials">https://www.algolia.com/doc/tutorials</a></p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

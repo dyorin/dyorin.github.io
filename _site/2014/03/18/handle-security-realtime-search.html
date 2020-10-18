@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Realtime Search: Security and our Javascript Client</h1>
+</header>
+
+<span class="time">18 Mar 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p><em><strong>Edit: As suggested on <a href="https://news.ycombinator.com/item?id=7419205">Hacker
+News</a>, SHA256 is not secure, as
+it allows a length extension attack. We have replaced it with HMAC-SHA256.</strong></em></p>
+
+<p>Instant is in our DNA, so our first priority was to build a search backend
+that would be able to return relevant realtime search results in a few
+milliseconds. However, the backend is just one variable in our realtime
+equation. The response time perceived by the end user is the total lapse of
+time between their first keystroke and the final display of their results.
+Thus, with an extremely fast backend, solving this equation comes down to
+optimising network latency. This is an issue we solve in two steps:</p>
+
+<ul>
+  <li>First, we have <a href="http://blog.algolia.com/added-asian-datacenter-offer/">datacenters in three different locations</a>, allowing us to answer queries in North America, Europe and Asia in less than 100ms (including search computation).</li>
+  <li>Second, to keep reducing this perceived latency, queries must be sent directly from the end users’ browsers or mobile phones to our servers. To avoid intermediaries like your own servers, we offer a JavaScript client for websites and ObjC/Android/C# clients for mobile apps.</li>
+</ul>
+
+<h2 id="the-security-challenge-of-javascript">The security challenge of JavaScript</h2>
+
+<p>Using this client means that you need to include an API key in your JavaScript
+(or mobile app) code. The first security issue with this approach is that this
+key can be easily retrieved by anyone who simply looks at the code of the
+page. This gives that person the potential to modify the content behind the
+website/mobile application! To fix this problem, we provide search-only API
+keys which protect your indexes from unauthorized modifications.</p>
+
+<p>This was a first step and we’ve quickly had to solve two other security
+issues:</p>
+
+<ul>
+  <li>**Limiting the ability to crawl your data: **you may not want people to get all your data by continuous querying. The simple solution was to limit the number of API calls a user could perform in a given period of time. We implemented this by setting a rate limit per IP address. However, this approach is not acceptable if a lot of users are behind a global firewall, thus sharing one IP address. This is very likely for our corporate users.</li>
+  <li><strong>Securing access control</strong>:  you may need to restrict the queries of a user to specific content. For example, you may have power users who should get access to more content than “regular” users. The easy way to do it is by using filters. The problem here with simple filters in your JavaScript code is that people can figure out how to modify these filters and get access to content they are not be supposed to see.</li>
+</ul>
+
+<h2 id="how-we-solve-it-altogether">How we solve it altogether</h2>
+
+<p>Today, most websites and applications require people to create an account and
+log in to access a personalized experience (think of CRM applications,
+Facebook or even Netflix). We decided to use these user IDs to solve these two
+issues by creating signed API keys. Let’s say you have an API key with search
+only permission and want to apply a filter on two groups of content (public OR
+power_users_only) for a specific user (id=42):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>api_key=20ffce3fdbf036db955d67645bb2c993
+query_filters=(public,power_users_only)
+user_token=42
+</code></pre></div></div>
+
+<p>You can generate a secured API key in your backend that is defined by a hash
+(HMAC SHA 256) of three elements:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>secured_api_key=HMAC_SHA_256(api_key, query_filters + user_token)
+secured_api_key=HMAC_SHA_256("20ffce3fdbf036db955d67645bb2c993", "(public,power_users_only)" + "42")
+secured_api_key="3abb95c273455ce9b57c61ee5258ba44093f17022dd4bfb39a37e56bee7d24a5"
+</code></pre></div></div>
+
+<p>For example, if you are using rails, the code in your backend would be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>secured_key = Algolia.generate_secured_api_key('20ffce3fdbf036db955d67645bb2c993', '(public,power_users_only)', '42')
+</code></pre></div></div>
+
+<p>You can then initialize your JavaScript code with the secured API key and
+associated information:</p>
+
+<p>The user identifier (defined by SetUserToken) is used instead of the IP
+address for the rate limit and the security filters (defined by
+SetSecurityTags) are automatically applied to the query.</p>
+
+<p>In practice, if a user wants to overstep her rights, she will need to modify
+her security tags and figure out the new hash. Our backend checks if a query
+is legit by computing all the possible hashes using all your available API
+keys for the queried index, as well as the security tags defined in the query
+and the user identifier (if set).  If there is no match between the hash of
+the query and the ones we computed, we will return a permission denied (403).
+Don’t worry, reverse-engineering the original API key using brute-force would
+require years and <a href="http://en.wikipedia.org/wiki/SHA-2#Comparison_of_SHA_functions">thousands of
+core</a>.</p>
+
+<p>You may want to apply security filters without limiting the rate of queries,
+so if you don’t need both of these features, you can use only one.</p>
+
+<p>We launched this new feature a few weeks ago and we have received very good
+feedback so far. Our customers don’t need to choose anymore between security
+and realtime search. If you see any way to improve this approach, we would
+love to hear your feedback!</p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/03/18/handle-security-realtime-search.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/03/17/caused-todays-performance-issues-europe-will-happen.html">&laquo; What Caused Today's Search Performance Issues In Europe and Why It Will Not Happen Again</a>
+  
+  
+    <a class="next" href="/2014/03/25/hipchats-blog-algolia-extends-hipchat-customer-support.html">On HipChat's blog: Algolia extends HipChat to customer support &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p><em><strong>Edit: As suggested on <a href="https://news.ycombinator.com/item?id=7419205">Hacker
+News</a>, SHA256 is not secure, as
+it allows a length extension attack. We have replaced it with HMAC-SHA256.</strong></em></p>
+
+<p>Instant is in our DNA, so our first priority was to build a search backend
+that would be able to return relevant realtime search results in a few
+milliseconds. However, the backend is just one variable in our realtime
+equation. The response time perceived by the end user is the total lapse of
+time between their first keystroke and the final display of their results.
+Thus, with an extremely fast backend, solving this equation comes down to
+optimising network latency. This is an issue we solve in two steps:</p>
+
+<ul>
+  <li>First, we have <a href="http://blog.algolia.com/added-asian-datacenter-offer/">datacenters in three different locations</a>, allowing us to answer queries in North America, Europe and Asia in less than 100ms (including search computation).</li>
+  <li>Second, to keep reducing this perceived latency, queries must be sent directly from the end users’ browsers or mobile phones to our servers. To avoid intermediaries like your own servers, we offer a JavaScript client for websites and ObjC/Android/C# clients for mobile apps.</li>
+</ul>
+
+<h2 id="the-security-challenge-of-javascript">The security challenge of JavaScript</h2>
+
+<p>Using this client means that you need to include an API key in your JavaScript
+(or mobile app) code. The first security issue with this approach is that this
+key can be easily retrieved by anyone who simply looks at the code of the
+page. This gives that person the potential to modify the content behind the
+website/mobile application! To fix this problem, we provide search-only API
+keys which protect your indexes from unauthorized modifications.</p>
+
+<p>This was a first step and we’ve quickly had to solve two other security
+issues:</p>
+
+<ul>
+  <li>**Limiting the ability to crawl your data: **you may not want people to get all your data by continuous querying. The simple solution was to limit the number of API calls a user could perform in a given period of time. We implemented this by setting a rate limit per IP address. However, this approach is not acceptable if a lot of users are behind a global firewall, thus sharing one IP address. This is very likely for our corporate users.</li>
+  <li><strong>Securing access control</strong>:  you may need to restrict the queries of a user to specific content. For example, you may have power users who should get access to more content than “regular” users. The easy way to do it is by using filters. The problem here with simple filters in your JavaScript code is that people can figure out how to modify these filters and get access to content they are not be supposed to see.</li>
+</ul>
+
+<h2 id="how-we-solve-it-altogether">How we solve it altogether</h2>
+
+<p>Today, most websites and applications require people to create an account and
+log in to access a personalized experience (think of CRM applications,
+Facebook or even Netflix). We decided to use these user IDs to solve these two
+issues by creating signed API keys. Let’s say you have an API key with search
+only permission and want to apply a filter on two groups of content (public OR
+power_users_only) for a specific user (id=42):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>api_key=20ffce3fdbf036db955d67645bb2c993
+query_filters=(public,power_users_only)
+user_token=42
+</code></pre></div></div>
+
+<p>You can generate a secured API key in your backend that is defined by a hash
+(HMAC SHA 256) of three elements:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>secured_api_key=HMAC_SHA_256(api_key, query_filters + user_token)
+secured_api_key=HMAC_SHA_256("20ffce3fdbf036db955d67645bb2c993", "(public,power_users_only)" + "42")
+secured_api_key="3abb95c273455ce9b57c61ee5258ba44093f17022dd4bfb39a37e56bee7d24a5"
+</code></pre></div></div>
+
+<p>For example, if you are using rails, the code in your backend would be:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>secured_key = Algolia.generate_secured_api_key('20ffce3fdbf036db955d67645bb2c993', '(public,power_users_only)', '42')
+</code></pre></div></div>
+
+<p>You can then initialize your JavaScript code with the secured API key and
+associated information:</p>
+
+<p>The user identifier (defined by SetUserToken) is used instead of the IP
+address for the rate limit and the security filters (defined by
+SetSecurityTags) are automatically applied to the query.</p>
+
+<p>In practice, if a user wants to overstep her rights, she will need to modify
+her security tags and figure out the new hash. Our backend checks if a query
+is legit by computing all the possible hashes using all your available API
+keys for the queried index, as well as the security tags defined in the query
+and the user identifier (if set).  If there is no match between the hash of
+the query and the ones we computed, we will return a permission denied (403).
+Don’t worry, reverse-engineering the original API key using brute-force would
+require years and <a href="http://en.wikipedia.org/wiki/SHA-2#Comparison_of_SHA_functions">thousands of
+core</a>.</p>
+
+<p>You may want to apply security filters without limiting the rate of queries,
+so if you don’t need both of these features, you can use only one.</p>
+
+<p>We launched this new feature a few weeks ago and we have received very good
+feedback so far. Our customers don’t need to choose anymore between security
+and realtime search. If you see any way to improve this approach, we would
+love to hear your feedback!</p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">AfterShip Leverages Algolia's Search as a Service to Track 10 Million Packages Around The World</h1>
+</header>
+
+<span class="time">10 Oct 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>Algolia Speeds Up Search Result Delivery Times From 10 Seconds To 250
+Milliseconds.The following post is a guest post by <a href="http://hk.linkedin.com/in/teddychan/">Teddy
+Chan</a>, Founder and CEO at
+<a href="https://www.aftership.com/">AfterShip</a>.</p>
+
+<p><img src="./assets/teddy.png" alt="Teddy Chan AfterShip" /></p>
+
+<p>AfterShip is an online tracking platform which helps online merchants track
+their shipment across multiple carriers and notify their customers via email
+or mobile. Being an online merchant myself, I shipped more than 30,000
+packages a month around the world. When customers contacted me to get an
+update on shipments I realized that I couldn’t track shipments from different
+carriers and get updates on their status in a single place. So I built
+Aftership to allow both consumers and online merchants view all their packages
+on a single platform.</p>
+
+<p>After winning the 2011 Global Startup Battle and 2011 Startup Weekend Hong
+Kong Aftership opened into beta and quickly helped thousands of online
+merchants to send out over 1,000,000 notifications to customers.</p>
+
+<p>One of the key parts of our service is providing customers around the world
+with up-to-date information about their packages.</p>
+
+<p>Right now we have more than 10 million tracking numbers in our database. This
+causes a few different challenges when it comes to search and we needed
+technology that would help us continuously index constantly changing
+information.</p>
+
+<h3 id="our-first-challenge-is-that-we-are-a-small-team-with-only-1-engineer">Our first challenge is that we are a small team with only 1 engineer.</h3>
+
+<p>We are not in the search business, so we needed a solution that would be easy
+to implement and work well with our existing infrastructure. Algolia’s
+extensive documentation made it easy to see that our set up and implementation
+time would be extremely fast and would work with any language and database, so
+we could get back to our core business.</p>
+
+<p><strong>Algolia was super easy, we had it tested, up and running in a week.</strong></p>
+
+<h3 id="our-second-challenge-was-quickly-delivering-search-results">Our second challenge was quickly delivering search results.</h3>
+
+<p>On Redis, searching for packages was simply impossible. For each query, it
+would simply lock up until the result was found, so it could run only one
+search at a time. Each search with Redis was taking up to 10 seconds. <strong>With
+Algolia we reduced search result delivery times to 250 milliseconds for any
+customer anywhere in the world.</strong> When you think about thousands of merchants
+who send more than 1 million packages per month, you can see how speed is
+critical.</p>
+
+<p>Downtime also is not an option when tracking packages around the globe.</p>
+
+<p>We are very strict when adopting new technologies and SaaS technologies can’t
+slow down our system.</p>
+
+<p><strong>Algolia had the highest uptime of the other solutions we looked at. There was no physical downtime.</strong></p>
+
+<h3 id="our-final-challenge-was-search-complexity">Our final challenge was search complexity.</h3>
+
+<p>Sometimes you need to know how many shipments are coming from Hong Kong and
+exactly where they are in transit to and from the U.S.. Shipments going around
+the globe can change status several times within a single day. With Algolia’s
+indexing we are able to instantly deliver up-to-date notifications on all 10
+million packages, so that customers can not only track their package on its
+journey, but they can also go to their online merchant’s shop and see a real-
+time status of their package.</p>
+
+<p><strong>In the end, it was Algolia’s customer service that won us over.</strong><br />
+Similar services and platforms were not responsive. With Algolia we either had
+the documentation we needed, immediately were able to get advice from an
+engineer or had our problem solved in less than a day. With such a small team
+this means a lot. And with the Enterprise package we know that Algolia will
+grow with us as quickly as our business does.</p>
+
+<p><strong>Want to find out more about the Algolia experience ?<br />
+<a href="https://www.algolia.com/features"> Discover and try it here </a></strong></p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/10/10/aftership-leverages-algolias-search-service-track-10-million-packages-around-world.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/09/01/4th-datacenter-california.html">&laquo; Algolia opened its 4th datacenter is in California!</a>
+  
+  
+    <a class="next" href="/2014/11/14/jadopado-delivers-instasearch-mobile-web-powered-algolia.html">Jadopado delivers instasearch for mobile and web powered by Algolia &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>Algolia Speeds Up Search Result Delivery Times From 10 Seconds To 250
+Milliseconds.The following post is a guest post by <a href="http://hk.linkedin.com/in/teddychan/">Teddy
+Chan</a>, Founder and CEO at
+<a href="https://www.aftership.com/">AfterShip</a>.</p>
+
+<p><img src="./assets/teddy.png" alt="Teddy Chan AfterShip" /></p>
+
+<p>AfterShip is an online tracking platform which helps online merchants track
+their shipment across multiple carriers and notify their customers via email
+or mobile. Being an online merchant myself, I shipped more than 30,000
+packages a month around the world. When customers contacted me to get an
+update on shipments I realized that I couldn’t track shipments from different
+carriers and get updates on their status in a single place. So I built
+Aftership to allow both consumers and online merchants view all their packages
+on a single platform.</p>
+
+<p>After winning the 2011 Global Startup Battle and 2011 Startup Weekend Hong
+Kong Aftership opened into beta and quickly helped thousands of online
+merchants to send out over 1,000,000 notifications to customers.</p>
+
+<p>One of the key parts of our service is providing customers around the world
+with up-to-date information about their packages.</p>
+
+<p>Right now we have more than 10 million tracking numbers in our database. This
+causes a few different challenges when it comes to search and we needed
+technology that would help us continuously index constantly changing
+information.</p>
+
+<h3 id="our-first-challenge-is-that-we-are-a-small-team-with-only-1-engineer">Our first challenge is that we are a small team with only 1 engineer.</h3>
+
+<p>We are not in the search business, so we needed a solution that would be easy
+to implement and work well with our existing infrastructure. Algolia’s
+extensive documentation made it easy to see that our set up and implementation
+time would be extremely fast and would work with any language and database, so
+we could get back to our core business.</p>
+
+<p><strong>Algolia was super easy, we had it tested, up and running in a week.</strong></p>
+
+<h3 id="our-second-challenge-was-quickly-delivering-search-results">Our second challenge was quickly delivering search results.</h3>
+
+<p>On Redis, searching for packages was simply impossible. For each query, it
+would simply lock up until the result was found, so it could run only one
+search at a time. Each search with Redis was taking up to 10 seconds. <strong>With
+Algolia we reduced search result delivery times to 250 milliseconds for any
+customer anywhere in the world.</strong> When you think about thousands of merchants
+who send more than 1 million packages per month, you can see how speed is
+critical.</p>
+
+<p>Downtime also is not an option when tracking packages around the globe.</p>
+
+<p>We are very strict when adopting new technologies and SaaS technologies can’t
+slow down our system.</p>
+
+<p><strong>Algolia had the highest uptime of the other solutions we looked at. There was no physical downtime.</strong></p>
+
+<h3 id="our-final-challenge-was-search-complexity">Our final challenge was search complexity.</h3>
+
+<p>Sometimes you need to know how many shipments are coming from Hong Kong and
+exactly where they are in transit to and from the U.S.. Shipments going around
+the globe can change status several times within a single day. With Algolia’s
+indexing we are able to instantly deliver up-to-date notifications on all 10
+million packages, so that customers can not only track their package on its
+journey, but they can also go to their online merchant’s shop and see a real-
+time status of their package.</p>
+
+<p><strong>In the end, it was Algolia’s customer service that won us over.</strong><br />
+Similar services and platforms were not responsive. With Algolia we either had
+the documentation we needed, immediately were able to get advice from an
+engineer or had our problem solved in less than a day. With such a small team
+this means a lot. And with the Enterprise package we know that Algolia will
+grow with us as quickly as our business does.</p>
+
+<p><strong>Want to find out more about the Algolia experience ?<br />
+<a href="https://www.algolia.com/features"> Discover and try it here </a></strong></p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

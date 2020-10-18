@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Concertwith.me's Competitive Edge: A Revamped Search UX with Algolia</h1>
+</header>
+
+<span class="time">28 Aug 2014</span>
+
+  <span class="categories">
+    &raquo; 
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>There are a lot of music discovery apps on the market, yet sifting through
+concert listings is anything but seamless. That’s why Cyprus-based startup
+<a href="http://concertwith.me/">Concertwith.me</a> aims to make finding local concerts
+and festivals as intuitive as possible. Automatically showing upcoming events
+in your area, the site offers personalized recommendations based on your
+preferences and your Facebook friends’ favorited music. Covering over 220,000
+events globally, the site uses Algolia to offer meaningful results for
+visitors who are also looking for something different.</p>
+
+<p>Founder Vit Myshlaev admits that concert sites often share the same pool of
+information. The differentiator is how that information is presented. “The
+biggest advantage one can have is user experience,” he explains. “There’s
+information out there, but do users find it? The reason that people don’t go
+to cool concerts is that they still don’t know about them!”</p>
+
+<p>As an example, he showed me one of the largest live music discovery sites on
+the web. Searching for an artist required navigating a convoluted maze of
+links before pulling up irrelevant results. “Users have to type in queries
+without autocomplete, typo-tolerance, or internationalization. They have to
+scroll through a long list of answers and click on paginated links. That’s not
+what people want in 2014,” said Myshlaev.</p>
+
+<p>To simplify search and make the results more relevant, Concertwith.me used our
+API. “We got a lot of user feedback for natural search,” Myshlaev wrote. Now
+visitors can search for artists and concerts instantly. With large user bases
+in the United States, Germany, France, Spain, Italy, Russia and Poland,
+Concertwith.me also benefits from Algolia’s <a href="https://www.algolia.com/doc#Multilingual">multi-lingual search
+feature</a>. “We’ve localized our app
+to many countries. For example, you can search in Russian or for artists that
+are Russian, and results will still come up,” says Myshlaev.</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2014/08/search.gif"><img src="./assets/search.gif" alt="search" /></a></p>
+
+<p>For users with a less targeted idea of what they’re looking for,
+Concertwith.me implemented structured search via
+<a href="http://faq.algolia.com/basics/what-is-faceting/">faceting</a>. “We also realized
+that some visitors don’t know what they want. Algolia search helps them find
+answers to questions like, Where will my favorite artist perform? How much do
+tickets cost? Are there any upcoming shows?”</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2014/08/recommendations.gif"><img src="./assets/recommendations.gif" alt="recommendations" /></a></p>
+
+<p>Concertwith.me’s goal is to reduce informational noise so that users can find
+and discover music as soon as possible. The start up experimented with a
+number of other search technologies before reading an <a href="http://insideintercom.io/7-things-wish-every-search-did/">article about us on
+Intercom.io</a>, which
+inspired Myshlaev. “When I saw what Algolia could do, I knew that this was the
+competitive edge I was looking for.”</p>
+
+<p><strong><em>Want to build a search bar with multi-category auto-completion like Concertwith.me? <a href="https://www.algolia.com/doc/tutorials">Learn how through our tutorial</a>.</em></strong></p>
+
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/2014/08/28/concertwith-mes-competitive-edge-revamped-search-ux-algolia.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+  
+    
+      
+        
+    
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+        
+    
+        
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/2014/08/21/algolia-for-realtime-expense-reporting.html">&laquo; How Abacus Leverages Algolia for Realtime Expense Reporting</a>
+  
+  
+    <a class="next" href="/2014/09/01/4th-datacenter-california.html">Algolia opened its 4th datacenter is in California! &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>There are a lot of music discovery apps on the market, yet sifting through
+concert listings is anything but seamless. That’s why Cyprus-based startup
+<a href="http://concertwith.me/">Concertwith.me</a> aims to make finding local concerts
+and festivals as intuitive as possible. Automatically showing upcoming events
+in your area, the site offers personalized recommendations based on your
+preferences and your Facebook friends’ favorited music. Covering over 220,000
+events globally, the site uses Algolia to offer meaningful results for
+visitors who are also looking for something different.</p>
+
+<p>Founder Vit Myshlaev admits that concert sites often share the same pool of
+information. The differentiator is how that information is presented. “The
+biggest advantage one can have is user experience,” he explains. “There’s
+information out there, but do users find it? The reason that people don’t go
+to cool concerts is that they still don’t know about them!”</p>
+
+<p>As an example, he showed me one of the largest live music discovery sites on
+the web. Searching for an artist required navigating a convoluted maze of
+links before pulling up irrelevant results. “Users have to type in queries
+without autocomplete, typo-tolerance, or internationalization. They have to
+scroll through a long list of answers and click on paginated links. That’s not
+what people want in 2014,” said Myshlaev.</p>
+
+<p>To simplify search and make the results more relevant, Concertwith.me used our
+API. “We got a lot of user feedback for natural search,” Myshlaev wrote. Now
+visitors can search for artists and concerts instantly. With large user bases
+in the United States, Germany, France, Spain, Italy, Russia and Poland,
+Concertwith.me also benefits from Algolia’s <a href="https://www.algolia.com/doc#Multilingual">multi-lingual search
+feature</a>. “We’ve localized our app
+to many countries. For example, you can search in Russian or for artists that
+are Russian, and results will still come up,” says Myshlaev.</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2014/08/search.gif"><img src="./assets/search.gif" alt="search" /></a></p>
+
+<p>For users with a less targeted idea of what they’re looking for,
+Concertwith.me implemented structured search via
+<a href="http://faq.algolia.com/basics/what-is-faceting/">faceting</a>. “We also realized
+that some visitors don’t know what they want. Algolia search helps them find
+answers to questions like, Where will my favorite artist perform? How much do
+tickets cost? Are there any upcoming shows?”</p>
+
+<p><a href="https://blog.algolia.com/wp-
+content/uploads/2014/08/recommendations.gif"><img src="./assets/recommendations.gif" alt="recommendations" /></a></p>
+
+<p>Concertwith.me’s goal is to reduce informational noise so that users can find
+and discover music as soon as possible. The start up experimented with a
+number of other search technologies before reading an <a href="http://insideintercom.io/7-things-wish-every-search-did/">article about us on
+Intercom.io</a>, which
+inspired Myshlaev. “When I saw what Algolia could do, I knew that this was the
+competitive edge I was looking for.”</p>
+
+<p><strong><em>Want to build a search bar with multi-category auto-completion like Concertwith.me? <a href="https://www.algolia.com/doc/tutorials">Learn how through our tutorial</a>.</em></strong></p>
+
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

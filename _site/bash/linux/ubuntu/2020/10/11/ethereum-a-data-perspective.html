@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <base href="/dyor/">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/dyor/assets/main.css">
+  <link rel="alternate" type="application/rss+xml" title="dyor" href="/dyor/feed.xml">
+  
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/dyor/">dyor</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/dyor/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <header class="post-header">
+  <h1 class="post-title">Open Finance: Ethereum | A Data Perspective</h1>
+</header>
+
+<span class="time">11 Oct 2020</span>
+
+  <span class="categories">
+    &raquo; <a href="/category/bash">bash</a>, <a href="/category/linux">linux</a>, <a href="/category/ubuntu">ubuntu</a>
+  </span>
+
+
+<div class="content">
+  <div class="post"><p>I have started a long process through a terminal. Is it possible to make the Ubuntu terminal make a sound once the process is complete?
+This way, I don’t need to keep checking, but will instead be notified through a sound or another notification.</p>
+
+<p>You can use this some alternatives;</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>your-bash-command <span class="o">&amp;&amp;</span> aplay /path/to/sound.wav  <span class="c"># can also with *.ogg file.</span>
+</code></pre></div></div>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>your-bash-command <span class="o">&amp;&amp;</span> paplay /path/to/sound.ogg  <span class="c"># can also with *.wav file.</span>
+</code></pre></div></div>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>your-bash-command<span class="p">;</span> spd-say <span class="s2">"done"</span>
+</code></pre></div></div>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>your-bash-command <span class="o">&amp;&amp;</span> notify-send <span class="s2">"done"</span>  <span class="c"># without sound</span>
+<span class="nv">$ </span>your-bash-command <span class="o">&amp;&amp;</span> notify-send <span class="s2">"Process completed"</span> <span class="s2">"Come back to the terminal, the task is over"</span>
+</code></pre></div></div>
+
+<hr />
+
+<p>And this script below is modification of that commands above.</p>
+
+<ol>
+  <li>Create the <code class="highlighter-rouge">notif-me.sh</code> file;</li>
+</ol>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
+
+notify-send <span class="s2">"Process completed"</span> <span class="s2">"Come back to the terminal, the task is over"</span>
+spd-say <span class="s2">"My lord, your process hasbeen complete."</span>
+</code></pre></div></div>
+
+<ol>
+  <li>Make it callable in <code class="highlighter-rouge">/bin</code></li>
+</ol>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo cp </span>notif-me.sh /bin/notif-me<span class="p">;</span>
+</code></pre></div></div>
+
+<ol>
+  <li>Use it;</li>
+</ol>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>your-bash-command<span class="p">;</span> notif-me
+
+<span class="c"># or</span>
+
+<span class="nv">$ </span>your-bash-command <span class="o">&amp;&amp;</span> notif-me
+</code></pre></div></div>
+</div>
+  <div class="share-page">
+  <span style="float: left;">Share this on &rarr;&nbsp;&nbsp;</span>
+
+  <!-- Twitter -->
+  <a href="https://twitter.com/share" class="twitter-share-button" data-via="">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+  <!-- Facebook -->
+  <div class="fb-share-button" data-href="http://localhost:4000/bash/linux/ubuntu/2020/10/11/ethereum-a-data-perspective.html" data-layout="button_count" style="position: relative; top: -8px; left: 3px;"></div>
+</div>
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6&appId=";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+</div>
+
+
+  
+    
+      
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+  
+    
+      
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+  
+    
+      
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+  
+    
+      
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+  
+    
+      
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+  
+    
+      
+        
+          
+            
+            <div class="panel-body">
+              <h4>Related Posts</h4>
+              <ul>
+            
+                <li class="relatedPost">
+                  <a href="http://localhost:4000/bash/linux/ubuntu/2020/10/11/bitcoin-a-data-perspective.html">Open Finance: Bitcoin | A Data Perspective</a>
+                  
+                    (Categories: <a href="/category/bash">bash</a>, <a href="/category/linux">linux</a>, <a href="/category/ubuntu">ubuntu</a>)
+                  
+                </li>
+          
+          
+        
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+  
+    
+      
+        
+          
+      
+          
+      
+          
+      
+    
+  
+    
+      
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+            
+                <li class="relatedPost">
+                  <a href="http://localhost:4000/server/linux/others/2020/10/11/open-fianance-data-platform.html">Open Finance: Data Platform</a>
+                  
+                    (Categories: <a href="/category/server">server</a>, <a href="/category/linux">linux</a>, <a href="/category/others">others</a>)
+                  
+                </li>
+          
+          
+        
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+  
+    
+      
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+  
+    
+      
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+  
+    
+      
+        
+          
+      
+          
+      
+          
+      
+    
+        
+          
+      
+          
+      
+          
+      
+    
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+    
+      
+  
+  
+  </ul>
+</div>
+
+
+<div class="PageNavigation">
+  
+    <a class="prev" href="/python/django/2020/10/11/deep-anomaly-detection.html">&laquo; Deep Anomaly Detection</a>
+  
+  
+    <a class="next" href="/open-finance/privacy/bitcoin/etherum/2020/10/11/privacy-in-open-finance.html">Open Finance Privacy & Security &raquo;</a>
+  
+</div>
+
+
+<section class="single">
+
+	<div class="wrap">
+
+		<p>I have started a long process through a terminal. Is it possible to make the Ubuntu terminal make a sound once the process is complete?
+This way, I don’t need to keep checking, but will instead be notified through a sound or another notification.</p>
+
+<p>You can use this some alternatives;</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>your-bash-command <span class="o">&amp;&amp;</span> aplay /path/to/sound.wav  <span class="c"># can also with *.ogg file.</span>
+</code></pre></div></div>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>your-bash-command <span class="o">&amp;&amp;</span> paplay /path/to/sound.ogg  <span class="c"># can also with *.wav file.</span>
+</code></pre></div></div>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>your-bash-command<span class="p">;</span> spd-say <span class="s2">"done"</span>
+</code></pre></div></div>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>your-bash-command <span class="o">&amp;&amp;</span> notify-send <span class="s2">"done"</span>  <span class="c"># without sound</span>
+<span class="nv">$ </span>your-bash-command <span class="o">&amp;&amp;</span> notify-send <span class="s2">"Process completed"</span> <span class="s2">"Come back to the terminal, the task is over"</span>
+</code></pre></div></div>
+
+<hr />
+
+<p>And this script below is modification of that commands above.</p>
+
+<ol>
+  <li>Create the <code class="highlighter-rouge">notif-me.sh</code> file;</li>
+</ol>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
+
+notify-send <span class="s2">"Process completed"</span> <span class="s2">"Come back to the terminal, the task is over"</span>
+spd-say <span class="s2">"My lord, your process hasbeen complete."</span>
+</code></pre></div></div>
+
+<ol>
+  <li>Make it callable in <code class="highlighter-rouge">/bin</code></li>
+</ol>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo cp </span>notif-me.sh /bin/notif-me<span class="p">;</span>
+</code></pre></div></div>
+
+<ol>
+  <li>Use it;</li>
+</ol>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>your-bash-command<span class="p">;</span> notif-me
+
+<span class="c"># or</span>
+
+<span class="nv">$ </span>your-bash-command <span class="o">&amp;&amp;</span> notif-me
+</code></pre></div></div>
+
+
+		
+	</div>
+
+</section>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/dyor/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dyor</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dyor</li><li><a class="u-email" href="mailto:support@therationalai.com">support@therationalai.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#github"></use></svg> <span class="username">dyor</span></a></li><li><a href="https://www.twitter.com/dyor"><svg class="svg-icon"><use xlink:href="/dyor/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">dyor</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
